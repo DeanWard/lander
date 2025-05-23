@@ -51,6 +51,11 @@ function updateGame() {
 }
 
 function resetGame() {
+    // Cancel any pending game over screen timeout
+    if (typeof cancelGameOverTimeout === 'function') {
+        cancelGameOverTimeout();
+    }
+    
     generatedChunks = new Set();
     worldEndX = 0;
     gameState = {
