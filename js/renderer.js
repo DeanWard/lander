@@ -372,6 +372,46 @@ function drawLander() {
     }
     
     ctx.restore();
+    
+    // Draw fuel progress bar above lander (in world space, not rotated with lander)
+    const barWidth = 30;  // Reduced from 40 to 30
+    const barHeight = 3;  // Reduced from 4 to 3
+    const barX = lander.x - gameState.cameraX - barWidth / 2;
+    const barY = lander.y - 45; // Increased distance from -30 to -45 pixels above the lander
+    
+    // Background bar
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+    ctx.fillRect(barX - 1, barY - 1, barWidth + 2, barHeight + 2);
+    
+    // Fuel bar color based on fuel level
+    const fuelPercent = Math.max(0, lander.fuel) / 100;
+    let barColor;
+    if (fuelPercent > 0.6) {
+        barColor = '#00ff00'; // Green
+    } else if (fuelPercent > 0.3) {
+        barColor = '#ffff00'; // Yellow
+    } else {
+        barColor = '#ff0000'; // Red
+    }
+    
+    // Fuel bar with glow effect
+    ctx.shadowColor = barColor;
+    ctx.shadowBlur = 5;
+    ctx.fillStyle = barColor;
+    ctx.fillRect(barX, barY, barWidth * fuelPercent, barHeight);
+    
+    // Bar outline
+    ctx.shadowBlur = 0;
+    ctx.strokeStyle = barColor;
+    ctx.lineWidth = 1;
+    ctx.strokeRect(barX, barY, barWidth, barHeight);
+    
+    // Optional: Show fuel percentage text next to the bar
+    ctx.fillStyle = barColor;
+    ctx.font = '10px Courier New';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${Math.floor(lander.fuel)}%`, barX + barWidth / 2, barY - 3);
+    
     ctx.shadowBlur = 0;
 }
 
