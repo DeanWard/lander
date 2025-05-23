@@ -62,6 +62,9 @@ function render() {
     // Draw lander
     drawLander();
     
+    // Draw ghost players (other multiplayer players)
+    drawGhostPlayers();
+    
     // Draw attraction field if pickup attractor is active
     if (gameState.pickupAttractorActive) {
         drawAttractionField();
@@ -428,6 +431,10 @@ function updateUI() {
     document.getElementById('pads').textContent = gameState.visitedPads.size;
     document.getElementById('time').textContent = Math.floor((Date.now() - gameState.startTime) / 1000);
     
+    // Update ghost count
+    const ghostCount = multiplayer && multiplayer.otherPlayers ? multiplayer.otherPlayers.size : 0;
+    document.getElementById('ghostCount').textContent = ghostCount;
+    
     // Update upgrades display
     const upgradesElement = document.getElementById('upgrades');
     if (gameState.lander.upgradedLegs) {
@@ -482,5 +489,120 @@ function drawAttractionField() {
     }
     
     ctx.restore();
+    ctx.shadowBlur = 0;
+}
+
+// Draw ghost players (other multiplayer players)
+function drawGhostPlayers() {
+    if (!multiplayer || !multiplayer.otherPlayers) return;
+    
+    const now = Date.now();
+    const fadeOutTime = 5000; // Fade out players after 5 seconds of no updates
+    
+    multiplayer.otherPlayers.forEach((player, playerId) => {
+        // Check if player data is recent enough
+        const timeSinceUpdate = now - player.lastUpdated.getTime();
+        if (timeSinceUpdate > fadeOutTime) {
+            // Remove stale players
+            multiplayer.otherPlayers.delete(playerId);
+            return;
+        }
+        
+        // Calculate fade-out based on how long since last update
+        const fadeAlpha = Math.max(0, 1 - (timeSinceUpdate / fadeOutTime));
+        if (fadeAlpha <= 0) return;
+        
+        // Screen position
+        const screenX = player.x - gameState.cameraX;
+        const screenY = player.y;
+        
+        // Skip if off-screen (with some margin)
+        if (screenX < -100 || screenX > canvas.width + 100) return;
+        
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.rotate(player.angle);
+        
+        // Ghost effect - semi-transparent with unique color
+        const hue = Math.abs(playerId.split('_')[1]?.charCodeAt(0) || 0) * 37 % 360;
+        const ghostColor = `hsla(${hue}, 70%, 60%, ${0.6 * fadeAlpha})`;
+        const glowColor = `hsl(${hue}, 70%, 60%)`;
+        
+        ctx.strokeStyle = ghostColor;
+        ctx.fillStyle = ghostColor.replace('0.6', '0.2');
+        ctx.lineWidth = 2;
+        ctx.shadowColor = glowColor;
+        ctx.shadowBlur = 8 * fadeAlpha;
+        
+        // Draw ghost lander body
+        ctx.beginPath();
+        ctx.moveTo(0, -15);
+        ctx.lineTo(-8, 5);
+        ctx.lineTo(-5, 15);
+        ctx.lineTo(5, 15);
+        ctx.lineTo(8, 5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Landing legs (simplified)
+        ctx.beginPath();
+        ctx.moveTo(-5, 10);
+        ctx.lineTo(-12, 15);
+        ctx.moveTo(5, 10);
+        ctx.lineTo(12, 15);
+        ctx.stroke();
+        
+        // Draw thrust effect if thrusters are active
+        if (player.thrustersActive && fadeAlpha > 0.3) {
+            const thrustLength = 15 + Math.random() * 8;
+            const thrustAlpha = 0.4 * fadeAlpha;
+            
+            const thrustGradient = ctx.createLinearGradient(0, 15, 0, 15 + thrustLength);
+            thrustGradient.addColorStop(0, `hsla(${hue + 30}, 80%, 70%, ${thrustAlpha})`);
+            thrustGradient.addColorStop(0.5, `hsla(${hue + 60}, 90%, 80%, ${thrustAlpha * 0.7})`);
+            thrustGradient.addColorStop(1, `hsla(${hue + 90}, 100%, 90%, 0)`);
+            
+            ctx.fillStyle = thrustGradient;
+            ctx.beginPath();
+            ctx.moveTo(-2, 15);
+            ctx.lineTo(2, 15);
+            ctx.lineTo(0, 15 + thrustLength);
+            ctx.closePath();
+            ctx.fill();
+        }
+        
+        ctx.restore();
+        
+        // Draw player name above the ghost
+        if (fadeAlpha > 0.5) {
+            ctx.save();
+            ctx.fillStyle = `hsla(${hue}, 70%, 80%, ${fadeAlpha})`;
+            ctx.font = '12px Courier New';
+            ctx.textAlign = 'center';
+            ctx.shadowColor = glowColor;
+            ctx.shadowBlur = 3;
+            ctx.fillText(player.name || 'Ghost', screenX, screenY - 25);
+            ctx.restore();
+        }
+        
+        // Draw velocity trail for moving ghosts
+        const speed = Math.sqrt(player.vx * player.vx + player.vy * player.vy);
+        if (speed > 1 && fadeAlpha > 0.4) {
+            const trailLength = Math.min(speed * 3, 30);
+            const trailX = screenX - player.vx * 2;
+            const trailY = screenY - player.vy * 2;
+            
+            ctx.save();
+            ctx.strokeStyle = `hsla(${hue}, 50%, 70%, ${0.3 * fadeAlpha})`;
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(screenX, screenY);
+            ctx.lineTo(trailX, trailY);
+            ctx.stroke();
+            ctx.restore();
+        }
+    });
+    
     ctx.shadowBlur = 0;
 } 

@@ -9,6 +9,9 @@ function updateGame() {
     updatePhysics();
     updateParticles();
     
+    // Send player position to other players (multiplayer)
+    sendPlayerPosition();
+    
     // Fade the flash effect quickly
     if (gameState.flashIntensity > 0) {
         gameState.flashIntensity -= 0.15;
@@ -50,6 +53,9 @@ function resetGame() {
     if (typeof cancelGameOverTimeout === 'function') {
         cancelGameOverTimeout();
     }
+    
+    // Clean up multiplayer data
+    cleanupPlayerData();
     
     generatedChunks = new Set();
     worldEndX = 0;

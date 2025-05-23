@@ -21,6 +21,7 @@
         <div>Speed: <span id="speed">0</span></div>
         <div>Pads Visited: <span id="pads">0</span></div>
         <div>Time: <span id="time">0</span>s</div>
+        <div id="multiplayer" style="color: #ff69b4; font-size: 12px;">👻 Ghosts: <span id="ghostCount">0</span></div>
         <div id="upgrades" style="color: #ffa500; display: none;">⚙️ Upgraded Legs</div>
         <div id="fuelEfficiency" style="color: #00ffff; display: none;">🔋 Fuel Efficiency: <span id="fuelEfficiencyTimer"></span>s</div>
         <div id="pickupAttractor" style="color: #ff69b4; display: none;">🧲 Pickup Attractor: <span id="pickupAttractorTimer"></span>s</div>
@@ -76,7 +77,11 @@
     </audio>
 
     <!-- JavaScript modules -->
+    <!-- Load Supabase client from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    
     <script src="js/gameState.js"></script>
+    <script src="js/supabase.js"></script>
     <script src="js/audio.js"></script>
     <script src="js/terrain.js"></script>
     <script src="js/physics.js"></script>
