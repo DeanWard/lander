@@ -1,0 +1,159 @@
+// Main game controller
+
+function updateGame() {
+    if (gameState.gameWon || gameState.crashed) return;
+    
+    // Start music if not playing
+    startGameMusic();
+    
+    updatePhysics();
+    updateParticles();
+    
+    // Fade the flash effect quickly
+    if (gameState.flashIntensity > 0) {
+        gameState.flashIntensity -= 0.15;
+        if (gameState.flashIntensity < 0) gameState.flashIntensity = 0;
+    }
+    
+    // Update pad glow effects
+    gameState.landingPads.forEach(pad => {
+        if (pad.visited) {
+            pad.glow = (pad.glow + 0.1) % (Math.PI * 2);
+        }
+    });
+    
+    // Update pickup animations
+    gameState.pickups.forEach(pickup => {
+        pickup.glow = (pickup.glow + 0.05) % (Math.PI * 2);
+        pickup.bobOffset = (pickup.bobOffset + 0.03) % (Math.PI * 2);
+    });
+    
+    // Update star twinkle
+    gameState.stars.forEach(star => {
+        star.twinkle += 0.05;
+    });
+    
+    // Camera follows lander at 40% of screen width
+    const cameraTarget = gameState.lander.x - canvas.width * 0.4;
+    gameState.cameraX += (cameraTarget - gameState.cameraX) * 0.1; // Smooth follow
+    
+    // Generate more terrain/pads if needed
+    if (gameState.lander.x + canvas.width > worldEndX - PAD_SPACING) {
+        generateMoreTerrainAndPads();
+    }
+    
+    // Check for victory condition
+    if (gameState.visitedPads.size >= 5 && !gameState.gameWon) {
+        gameState.gameWon = true;
+        document.getElementById('finalTime').textContent = Math.floor((Date.now() - gameState.startTime) / 1000);
+        document.getElementById('victory').style.display = 'block';
+    }
+}
+
+function resetGame() {
+    generatedChunks = new Set();
+    worldEndX = 0;
+    gameState = {
+        lander: {
+            x: 100,
+            y: 100,
+            vx: 0,
+            vy: 0,
+            angle: 0,
+            fuel: 100,
+            landed: false,
+            onPad: null,
+            upgradedLegs: false
+        },
+        terrain: [],
+        landingPads: [],
+        pickups: [],
+        visitedPads: new Set(),
+        particles: [],
+        stars: [],
+        startTime: Date.now(),
+        gameWon: false,
+        crashed: false,
+        flashIntensity: 0,
+        lastThrustTime: 0,
+        thrustTapCount: 0,
+        musicPlaying: false,
+        thrustersActive: false,
+        rotationActive: false,
+        invulnerable: false,
+        invulnerableTimer: 0,
+        cameraX: 0
+    };
+    
+    generateStars();
+    // Generate initial terrain chunks
+    generateTerrainChunk(0);
+    generateTerrainChunk(1);
+    
+    document.getElementById('victory').style.display = 'none';
+    document.getElementById('gameOver').style.display = 'none';
+    
+    // Restart music
+    restartGameMusic();
+    
+    // Make sure rocket sound is stopped
+    stopRocketSound();
+    
+    // Make sure hiss sound is stopped
+    stopHissSound();
+}
+
+function startGame() {
+    if (gameStarted) return;
+    
+    // Play start sound
+    playStartSound();
+    
+    gameStarted = true;
+    gameState.startTime = Date.now();
+    
+    // Show game UI
+    document.getElementById('startScreen').style.display = 'none';
+    document.getElementById('ui').style.display = 'block';
+    document.getElementById('controls').style.display = 'block';
+    
+    // Initialize terrain and game state
+    generatedChunks = new Set();
+    worldEndX = 0;
+    gameState.terrain = [];
+    gameState.landingPads = [];
+    
+    // Generate initial chunks
+    generateTerrainChunk(0); // Generate first chunk
+    generateTerrainChunk(1); // Generate second chunk for smooth start
+    
+    // Start music
+    startGameMusic();
+    
+    // Debug audio after user interaction
+    debugAudio();
+}
+
+function gameLoop() {
+    handleInput();
+    if (gameStarted) {
+        updateGame();
+    }
+    render();
+    requestAnimationFrame(gameLoop);
+}
+
+// Initialize the game
+function initGame() {
+    // Initialize stars (for background on start screen)
+    generateStars();
+    
+    // Set up start button event
+    document.getElementById('startButton').addEventListener('click', startGame);
+    
+    // Start the game loop
+    gameLoop();
+}
+
+// Start the game when the page loads
+window.addEventListener('load', initGame); 

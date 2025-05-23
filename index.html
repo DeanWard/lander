@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Neon Lunar Lander</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="startScreen" class="neon-text">
+        <h1 style="color: #00ffff;">NEON LUNAR LANDER</h1>
+        <p>Land on all 5 pads to complete your mission</p>
+        <button id="startButton" class="neon-button">START MISSION</button>
+    </div>
+    
+    <div id="ui" class="neon-text" style="display: none;">
+        <div>Fuel: <span id="fuel">100</span>%</div>
+        <div>Speed: <span id="speed">0</span></div>
+        <div>Pads Visited: <span id="pads">0</span>/5</div>
+        <div>Time: <span id="time">0</span>s</div>
+        <div id="upgrades" style="color: #ffa500; display: none;">⚙️ Upgraded Legs</div>
+    </div>
+    
+    <div id="controls" style="display: none;">
+        <div>↑ Thrust | ← → Rotate | Double-tap ↑ to launch from pad</div>
+    </div>
+    
+    <div id="gameOver" class="neon-text">
+        <h2 style="color: #ff0000;">LANDER DESTROYED!</h2>
+        <div style="color: #00ffff;">Pads Visited: <span id="padsVisitedGameOver"></span></div>
+        <p style="color: #ffff00;">Press SPACE to try again</p>
+    </div>
+    
+    <div id="victory" class="neon-text" style="border: 2px solid #00ff00; box-shadow: 0 0 30px #00ff00;">
+        <h2 style="color: #00ff00;">Mission Complete!</h2>
+        <p>Time: <span id="finalTime"></span>s</p>
+        <button onclick="resetGame()" style="background: #000; color: #00ff00; border: 2px solid #00ff00; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Play Again</button>
+    </div>
+
+    <!-- Audio elements -->
+    <audio id="gameMusic" loop>
+        <source src="game-music.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="startSound" preload="auto">
+        <source src="start.mp3" type="audio/mpeg">
+    </audio>
+    
+    <audio id="rocketSound" loop preload="auto">
+        <source src="rocket-sound.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="explodeSound" preload="auto">
+        <source src="explode.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="hissSound" loop preload="auto">
+        <source src="hiss.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="legsUpgradeSound" preload="auto">
+        <source src="legs-upgrade.mp3" type="audio/mpeg">
+    </audio>
+
+    <audio id="landSound" preload="auto">
+        <source src="land.wav" type="audio/wav">
+    </audio>
+
+    <audio id="launchSound" preload="auto">
+        <source src="launch.wav" type="audio/wav">
+    </audio>
+
+    <!-- JavaScript modules -->
+    <script src="js/gameState.js"></script>
+    <script src="js/audio.js"></script>
+    <script src="js/terrain.js"></script>
+    <script src="js/physics.js"></script>
+    <script src="js/renderer.js"></script>
+    <script src="js/input.js"></script>
+    <script src="js/game.js"></script>
+</body>
+</html> 
