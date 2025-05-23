@@ -431,6 +431,11 @@ function updateUI() {
     document.getElementById('pads').textContent = gameState.visitedPads.size;
     document.getElementById('time').textContent = Math.floor((Date.now() - gameState.startTime) / 1000);
     
+    // Update personal best
+    const currentScore = gameState.visitedPads.size;
+    const displayBest = Math.max(multiplayer.personalBest || 0, currentScore);
+    document.getElementById('personalBest').textContent = displayBest;
+    
     // Update ghost count
     const ghostCount = multiplayer && multiplayer.otherPlayers ? multiplayer.otherPlayers.size : 0;
     document.getElementById('ghostCount').textContent = ghostCount;
@@ -605,4 +610,116 @@ function drawGhostPlayers() {
     });
     
     ctx.shadowBlur = 0;
+}
+
+// Update leaderboards
+async function updateLeaderboards() {
+    if (!gameStarted) return;
+    
+    // Update player identity display
+    document.getElementById('currentPlayerName').textContent = multiplayer.playerName || 'Loading...';
+    
+    try {
+        // Get current session leaderboard
+        const currentLeaderboard = await getLeaderboard(5);
+        const currentScoresDiv = document.getElementById('currentScores');
+        currentScoresDiv.innerHTML = '';
+        
+        currentLeaderboard.forEach((entry, index) => {
+            const div = document.createElement('div');
+            div.style.marginBottom = '2px';
+            div.style.color = index === 0 ? '#ffff00' : index === 1 ? '#ffffff' : index === 2 ? '#ff8800' : '#aaaaaa';
+            
+            const isCurrentPlayer = entry.player_id === multiplayer.playerId;
+            const playerName = isCurrentPlayer ? 'YOU' : (entry.player_name || 'Anonymous');
+            div.innerHTML = `${index + 1}. ${playerName}: ${entry.best_score}`;
+            
+            if (isCurrentPlayer) {
+                div.style.fontWeight = 'bold';
+                div.style.textShadow = '0 0 5px #00ff00';
+            }
+            
+            currentScoresDiv.appendChild(div);
+        });
+        
+        // Get all-time high scores
+        const allTimeScores = await getHighScores(5);
+        const allTimeScoresDiv = document.getElementById('allTimeScores');
+        allTimeScoresDiv.innerHTML = '';
+        
+        allTimeScores.forEach((entry, index) => {
+            const div = document.createElement('div');
+            div.style.marginBottom = '2px';
+            div.style.color = index === 0 ? '#ffff00' : index === 1 ? '#ffffff' : index === 2 ? '#ff8800' : '#aaaaaa';
+            
+            const isCurrentPlayer = entry.player_id === multiplayer.playerId;
+            const playerName = isCurrentPlayer ? 'YOU' : (entry.player_name || 'Anonymous');
+            div.innerHTML = `${index + 1}. ${playerName}: ${entry.score}`;
+            
+            if (isCurrentPlayer) {
+                div.style.fontWeight = 'bold';
+                div.style.textShadow = '0 0 5px #00ff00';
+            }
+            
+            allTimeScoresDiv.appendChild(div);
+        });
+        
+    } catch (error) {
+        console.error('Error updating leaderboards:', error);
+    }
+}
+
+// Change player name
+function changePlayerName() {
+    const nameInput = document.getElementById('nameInput');
+    const changeButton = document.getElementById('changeName');
+    const currentNameDiv = document.getElementById('currentPlayerName');
+    
+    if (nameInput.style.display === 'none') {
+        // Show input field
+        nameInput.style.display = 'block';
+        nameInput.value = multiplayer.playerName;
+        nameInput.focus();
+        nameInput.select();
+        changeButton.textContent = 'SAVE';
+    } else {
+        // Save new name
+        const newName = nameInput.value.trim();
+        if (newName && newName.length > 0 && newName !== multiplayer.playerName) {
+            multiplayer.playerName = newName;
+            localStorage.setItem('neonLunarLander_playerName', newName);
+            currentNameDiv.textContent = newName;
+        }
+        
+        nameInput.style.display = 'none';
+        changeButton.textContent = 'CHANGE NAME';
+        
+        // Update leaderboards to reflect name change
+        updateLeaderboards();
+    }
+}
+
+// Handle Enter key in name input
+function handleNameInputKeypress(e) {
+    if (e.key === 'Enter') {
+        changePlayerName();
+    } else if (e.key === 'Escape') {
+        document.getElementById('nameInput').style.display = 'none';
+        document.getElementById('changeName').textContent = 'CHANGE NAME';
+    }
+}
+
+// Toggle leaderboard visibility
+function toggleLeaderboard() {
+    const leaderboard = document.getElementById('leaderboard');
+    const button = document.getElementById('toggleLeaderboard');
+    
+    if (leaderboard.style.display === 'none') {
+        leaderboard.style.display = 'block';
+        button.textContent = 'HIDE';
+        updateLeaderboards();
+    } else {
+        leaderboard.style.display = 'none';
+        button.textContent = 'SHOW';
+    }
 } 

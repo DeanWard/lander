@@ -21,14 +21,37 @@
         <div>Speed: <span id="speed">0</span></div>
         <div>Pads Visited: <span id="pads">0</span></div>
         <div>Time: <span id="time">0</span>s</div>
+        <div style="color: #00ff00; font-size: 12px;">🏆 Personal Best: <span id="personalBest">0</span></div>
         <div id="multiplayer" style="color: #ff69b4; font-size: 12px;">👻 Ghosts: <span id="ghostCount">0</span></div>
         <div id="upgrades" style="color: #ffa500; display: none;">⚙️ Upgraded Legs</div>
         <div id="fuelEfficiency" style="color: #00ffff; display: none;">🔋 Fuel Efficiency: <span id="fuelEfficiencyTimer"></span>s</div>
         <div id="pickupAttractor" style="color: #ff69b4; display: none;">🧲 Pickup Attractor: <span id="pickupAttractorTimer"></span>s</div>
     </div>
     
+    <div id="leaderboard" class="neon-text" style="position: absolute; top: 20px; right: 20px; background: rgba(0,0,0,0.7); padding: 15px; border: 1px solid #00ffff; border-radius: 5px; min-width: 200px; display: none;">
+        <h3 style="color: #00ffff; margin: 0 0 10px 0; text-align: center;">🏆 LEADERBOARD</h3>
+        
+        <div id="playerIdentity" style="margin-bottom: 15px; padding: 5px; border: 1px solid #ff69b4; border-radius: 3px;">
+            <div style="color: #ff69b4; font-size: 11px; margin-bottom: 3px;">Your Identity:</div>
+            <div id="currentPlayerName" style="color: #ffffff; font-size: 12px; font-weight: bold;"></div>
+            <input type="text" id="nameInput" style="background: rgba(0,0,0,0.8); border: 1px solid #00ffff; color: #ffffff; padding: 2px; font-size: 10px; width: 100%; margin-top: 3px; display: none;" maxlength="20" placeholder="Enter new name...">
+            <button id="changeName" style="background: none; border: 1px solid #ff69b4; color: #ff69b4; padding: 1px 5px; font-size: 9px; cursor: pointer; margin-top: 3px;">CHANGE NAME</button>
+        </div>
+        
+        <div id="currentLeaderboard">
+            <h4 style="color: #ffff00; margin: 5px 0; font-size: 12px;">Current Session</h4>
+            <div id="currentScores" style="font-size: 11px;"></div>
+        </div>
+        <div id="allTimeLeaderboard" style="margin-top: 15px;">
+            <h4 style="color: #ff69b4; margin: 5px 0; font-size: 12px;">All-Time Best</h4>
+            <div id="allTimeScores" style="font-size: 11px;"></div>
+        </div>
+        <button id="toggleLeaderboard" style="background: none; border: 1px solid #00ffff; color: #00ffff; padding: 2px 5px; font-size: 10px; cursor: pointer; margin-top: 10px; width: 100%;">HIDE</button>
+    </div>
+    
     <div id="controls" style="display: none;">
         <div>↑ Thrust | ← → Rotate | Double-tap ↑ to launch from pad</div>
+        <div style="font-size: 12px; margin-top: 5px;">Press L to toggle leaderboard</div>
     </div>
     
     <div id="gameOver" class="neon-text">

@@ -39,6 +39,12 @@ document.addEventListener('keydown', (e) => {
         // Just prepare the audio - don't actually play yet
         rocketSound.load();
     }
+    
+    // Toggle leaderboard with 'L' key
+    if (e.key.toLowerCase() === 'l' && gameStarted) {
+        e.preventDefault();
+        toggleLeaderboard();
+    }
 });
 
 document.addEventListener('keyup', (e) => {
@@ -97,4 +103,19 @@ function restartAfterCrash() {
     // Play start sound
     playStartSound();
     resetGame();
-} 
+}
+
+// Set up leaderboard button event
+window.addEventListener('load', () => {
+    document.getElementById('toggleLeaderboard').addEventListener('click', toggleLeaderboard);
+    document.getElementById('changeName').addEventListener('click', changePlayerName);
+    document.getElementById('nameInput').addEventListener('keydown', handleNameInputKeypress);
+    
+    // Show leaderboard by default when game starts
+    setTimeout(() => {
+        if (gameStarted) {
+            document.getElementById('leaderboard').style.display = 'block';
+            updateLeaderboards();
+        }
+    }, 2000);
+}); 

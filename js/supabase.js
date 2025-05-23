@@ -11,9 +11,12 @@ const multiplayer = {
     gameSessionId: null,
     otherPlayers: new Map(),
     subscription: null,
+    highScoreSubscription: null,
     lastUpdateTime: 0,
     updateInterval: 100, // Update every 100ms
-    initialized: false
+    initialized: false,
+    personalBest: 0,
+    currentSessionScore: 0
 };
 
 // Initialize multiplayer system
@@ -21,22 +24,55 @@ async function initMultiplayer() {
     if (multiplayer.initialized) return;
     
     try {
-        // Generate unique player ID and name
-        multiplayer.playerId = 'player_' + Math.random().toString(36).substr(2, 9);
-        multiplayer.playerName = 'Ghost ' + Math.floor(Math.random() * 1000);
+        // Check for existing player ID in localStorage
+        const storedPlayerId = localStorage.getItem('neonLunarLander_playerId');
+        const storedPlayerName = localStorage.getItem('neonLunarLander_playerName');
+        
+        if (storedPlayerId && storedPlayerName) {
+            // Use existing player identity
+            multiplayer.playerId = storedPlayerId;
+            multiplayer.playerName = storedPlayerName;
+            console.log('Returning player:', multiplayer.playerId, multiplayer.playerName);
+        } else {
+            // Generate new player ID and name for new players
+            multiplayer.playerId = 'player_' + Math.random().toString(36).substr(2, 9);
+            multiplayer.playerName = 'Ghost ' + Math.floor(Math.random() * 1000);
+            
+            // Save to localStorage for future sessions
+            localStorage.setItem('neonLunarLander_playerId', multiplayer.playerId);
+            localStorage.setItem('neonLunarLander_playerName', multiplayer.playerName);
+            console.log('New player created:', multiplayer.playerId, multiplayer.playerName);
+        }
+        
+        // Always generate a new session ID for each game session
         multiplayer.gameSessionId = 'session_' + Date.now();
         
         multiplayer.initialized = true;
         
         // Subscribe to realtime updates
         subscribeToPlayerPositions();
+        subscribeToHighScores();
         
         // Load existing players after our ID is set
         loadExistingPlayers();
         
+        // Load personal best score
+        await getPersonalBest();
+        
     } catch (error) {
         console.error('Error initializing multiplayer:', error);
     }
+}
+
+// Function to reset player identity (useful for testing or if player wants a new identity)
+function resetPlayerIdentity() {
+    localStorage.removeItem('neonLunarLander_playerId');
+    localStorage.removeItem('neonLunarLander_playerName');
+    multiplayer.playerId = null;
+    multiplayer.playerName = null;
+    multiplayer.initialized = false;
+    multiplayer.personalBest = 0;
+    console.log('Player identity reset. Refresh the page to get a new identity.');
 }
 
 // Load existing players as ghosts
@@ -139,6 +175,9 @@ async function sendPlayerPosition() {
     const now = Date.now();
     if (now - multiplayer.lastUpdateTime < multiplayer.updateInterval) return;
     
+    // Update current session score
+    multiplayer.currentSessionScore = gameState.visitedPads.size;
+    
     try {
         const playerData = {
             player_id: multiplayer.playerId,
@@ -152,6 +191,7 @@ async function sendPlayerPosition() {
             thrusters_active: gameState.thrustersActive,
             crashed: gameState.crashed,
             landed: gameState.lander.landed,
+            pads_visited: multiplayer.currentSessionScore,
             game_session_id: multiplayer.gameSessionId
         };
         
@@ -286,3 +326,92 @@ window.addEventListener('beforeunload', cleanupPlayerData);
 
 // Start initialization
 initSupabaseClient();
+
+// Get current leaderboard
+async function getLeaderboard(limit = 10) {
+    if (!supabase) return [];
+    
+    try {
+        const { data, error } = await supabase
+            .from('leaderboard')
+            .select('*')
+            .limit(limit);
+            
+        if (error) {
+            console.error('Error fetching leaderboard:', error);
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('Error in getLeaderboard:', error);
+        return [];
+    }
+}
+
+// Get all-time high scores
+async function getHighScores(limit = 10) {
+    if (!supabase) return [];
+    
+    try {
+        const { data, error } = await supabase
+            .from('high_scores')
+            .select('*')
+            .order('score', { ascending: false })
+            .order('achieved_at', { ascending: false })
+            .limit(limit);
+            
+        if (error) {
+            console.error('Error fetching high scores:', error);
+            return [];
+        }
+        
+        return data || [];
+    } catch (error) {
+        console.error('Error in getHighScores:', error);
+        return [];
+    }
+}
+
+// Get player's personal best
+async function getPersonalBest() {
+    if (!supabase || !multiplayer.playerId) return 0;
+    
+    try {
+        const { data, error } = await supabase
+            .from('high_scores')
+            .select('score')
+            .eq('player_id', multiplayer.playerId)
+            .order('score', { ascending: false })
+            .limit(1);
+            
+        if (error) {
+            console.error('Error fetching personal best:', error);
+            return 0;
+        }
+        
+        const personalBest = data && data.length > 0 ? data[0].score : 0;
+        multiplayer.personalBest = personalBest;
+        return personalBest;
+    } catch (error) {
+        console.error('Error in getPersonalBest:', error);
+        return 0;
+    }
+}
+
+// Subscribe to high score updates
+function subscribeToHighScores() {
+    if (!supabase || multiplayer.highScoreSubscription) return;
+    
+    multiplayer.highScoreSubscription = supabase
+        .channel('high_scores_channel')
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'high_scores'
+        }, (payload) => {
+            // Refresh leaderboards when new high scores are achieved
+            updateLeaderboards();
+        })
+        .subscribe();
+}
