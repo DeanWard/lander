@@ -31,8 +31,51 @@ async function initMultiplayer() {
         // Subscribe to realtime updates
         subscribeToPlayerPositions();
         
+        // Load existing players after our ID is set
+        loadExistingPlayers();
+        
     } catch (error) {
         console.error('Error initializing multiplayer:', error);
+    }
+}
+
+// Load existing players as ghosts
+async function loadExistingPlayers() {
+    if (!supabase || !multiplayer.playerId) return;
+    
+    try {
+        // Get recent player positions (last 30 seconds)
+        const { data, error } = await supabase
+            .from('player_positions')
+            .select('*')
+            .gte('last_updated', new Date(Date.now() - 30000).toISOString())
+            .neq('player_id', multiplayer.playerId);
+            
+        if (error) {
+            console.error('Error loading existing players:', error);
+            return;
+        }
+        
+        // Load existing players as ghosts
+        data.forEach(record => {
+            multiplayer.otherPlayers.set(record.player_id, {
+                id: record.player_id,
+                name: record.player_name,
+                x: record.x,
+                y: record.y,
+                angle: record.angle,
+                vx: record.vx,
+                vy: record.vy,
+                fuel: record.fuel,
+                thrustersActive: record.thrusters_active,
+                crashed: record.crashed,
+                landed: record.landed,
+                lastUpdated: new Date(record.last_updated)
+            });
+        });
+        
+    } catch (error) {
+        console.error('Error loading existing players:', error);
     }
 }
 
@@ -218,11 +261,11 @@ async function testSupabaseConnection() {
     if (!supabase) return;
     
     try {
-        // Try a simple query to test the connection - just get any records (limit 5)
+        // Try a simple query to test the connection - just get any records (limit 1)
         const { data, error } = await supabase
             .from('player_positions')
             .select('*')
-            .limit(5);
+            .limit(1);
             
         if (error) {
             console.error('Supabase connection test failed:', error);
@@ -230,26 +273,6 @@ async function testSupabaseConnection() {
                 console.error('The player_positions table doesn\'t exist. Please run the SQL migration first!');
             }
         } else {
-            // Load existing players as ghosts
-            data.forEach(record => {
-                if (record.player_id !== multiplayer.playerId) {
-                    multiplayer.otherPlayers.set(record.player_id, {
-                        id: record.player_id,
-                        name: record.player_name,
-                        x: record.x,
-                        y: record.y,
-                        angle: record.angle,
-                        vx: record.vx,
-                        vy: record.vy,
-                        fuel: record.fuel,
-                        thrustersActive: record.thrusters_active,
-                        crashed: record.crashed,
-                        landed: record.landed,
-                        lastUpdated: new Date(record.last_updated)
-                    });
-                }
-            });
-            
             // Connection works, now initialize multiplayer
             initMultiplayer();
         }
