@@ -28,6 +28,7 @@ let gameState = {
     visitedPads: new Set(),
     particles: [],
     stars: [],
+    planets: [],
     startTime: 0,
     gameWon: false,
     crashed: false,

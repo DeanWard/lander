@@ -77,6 +77,7 @@ function resetGame() {
         visitedPads: new Set(),
         particles: [],
         stars: [],
+        planets: [],
         startTime: Date.now(),
         gameWon: false,
         crashed: false,
@@ -98,6 +99,7 @@ function resetGame() {
     };
     
     generateStars();
+    generatePlanets(); // Generate planets for midground parallax
     // Generate initial terrain chunks
     generateTerrainChunk(0);
     generateTerrainChunk(1);
@@ -159,6 +161,7 @@ function gameLoop() {
 function initGame() {
     // Initialize stars (for background on start screen)
     generateStars();
+    generatePlanets(); // Generate planets for midground parallax
     
     // Set up start button event
     document.getElementById('startButton').addEventListener('click', startGame);

@@ -16,6 +16,9 @@ function render() {
         ctx.fillRect(star.x, star.y, 2, 2);
     });
     
+    // Draw planets (midground with parallax)
+    drawPlanets();
+    
     if (!gameStarted) {
         return; // Don't render the rest if game hasn't started
     }
@@ -84,6 +87,84 @@ function render() {
     
     // Update UI
     updateUI();
+}
+
+function drawPlanets() {
+    gameState.planets.forEach(planet => {
+        // Calculate parallax position
+        const parallaxX = planet.x - (gameState.cameraX * planet.parallaxFactor);
+        
+        // Only draw if planet is visible (with some margin)
+        if (parallaxX + planet.radius < -100 || parallaxX - planet.radius > canvas.width + 100) {
+            return;
+        }
+        
+        ctx.save();
+        ctx.translate(parallaxX, planet.y);
+        
+        // Planet rotation for subtle animation
+        planet.rotation = (planet.rotation || 0) + planet.rotationSpeed;
+        ctx.rotate(planet.rotation);
+        
+        // Planet color
+        const planetColor = `hsl(${planet.hue}, ${planet.saturation}%, ${planet.lightness}%)`;
+        const glowColor = `hsl(${planet.hue}, ${Math.min(planet.saturation + 20, 100)}%, ${Math.min(planet.lightness + 30, 90)}%)`;
+        
+        // Draw atmospheric glow
+        const glowGradient = ctx.createRadialGradient(0, 0, planet.radius * 0.8, 0, 0, planet.radius * 2);
+        glowGradient.addColorStop(0, `hsla(${planet.hue}, ${planet.saturation}%, ${planet.lightness}%, 0)`);
+        glowGradient.addColorStop(0.7, `hsla(${planet.hue}, ${planet.saturation}%, ${planet.lightness}%, ${planet.glowIntensity * 0.3})`);
+        glowGradient.addColorStop(1, `hsla(${planet.hue}, ${planet.saturation}%, ${planet.lightness}%, 0)`);
+        
+        ctx.fillStyle = glowGradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, planet.radius * 2, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw planet body with subtle shading
+        const planetGradient = ctx.createRadialGradient(-planet.radius * 0.3, -planet.radius * 0.3, 0, 0, 0, planet.radius);
+        planetGradient.addColorStop(0, `hsl(${planet.hue}, ${planet.saturation}%, ${Math.min(planet.lightness + 25, 95)}%)`);
+        planetGradient.addColorStop(0.6, planetColor);
+        planetGradient.addColorStop(1, `hsl(${planet.hue}, ${Math.min(planet.saturation + 20, 100)}%, ${Math.max(planet.lightness - 30, 5)}%)`);
+        
+        ctx.fillStyle = planetGradient;
+        ctx.beginPath();
+        ctx.arc(0, 0, planet.radius, 0, Math.PI * 2);
+        ctx.fill();
+        
+        // Draw rings for gas giants
+        if (planet.hasRings) {
+            ctx.strokeStyle = `hsla(${planet.hue + 30}, ${Math.max(planet.saturation - 20, 20)}%, ${planet.lightness}%, 0.6)`;
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            
+            // Multiple ring segments for visual interest
+            for (let i = 0; i < 3; i++) {
+                const ringRadius = planet.ringRadius + (i * 8);
+                ctx.beginPath();
+                ctx.ellipse(0, 0, ringRadius, ringRadius * 0.3, Math.PI * 0.1, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+        
+        // Add subtle surface features for rocky planets
+        if (!planet.hasRings && planet.radius < 35) {
+            ctx.fillStyle = `hsla(${planet.hue + 60}, ${planet.saturation}%, ${Math.max(planet.lightness - 20, 10)}%, 0.4)`;
+            
+            // Random surface spots/features
+            for (let i = 0; i < 3; i++) {
+                const spotX = (Math.random() - 0.5) * planet.radius * 0.8;
+                const spotY = (Math.random() - 0.5) * planet.radius * 0.8;
+                const spotRadius = Math.random() * planet.radius * 0.15 + planet.radius * 0.05;
+                
+                ctx.beginPath();
+                ctx.arc(spotX, spotY, spotRadius, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+        
+        ctx.restore();
+    });
 }
 
 function drawForcefield() {

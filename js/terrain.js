@@ -209,4 +209,47 @@ function generateStars() {
             twinkle: Math.random() * Math.PI * 2
         });
     }
+}
+
+// Generate planets for midground parallax effect
+function generatePlanets() {
+    gameState.planets = [];
+    const numPlanets = Math.floor(canvas.width / 600) + 2; // About one planet per 600 pixels of screen width
+    
+    for (let i = 0; i < numPlanets; i++) {
+        const planet = {
+            x: Math.random() * canvas.width * 3, // Spread planets across a wider area
+            y: Math.random() * canvas.height * 0.4 + canvas.height * 0.1, // Upper 40% of screen, offset down a bit
+            radius: Math.random() * 120 + 60, // Size between 60-180 pixels (much bigger!)
+            parallaxFactor: 0.3 + Math.random() * 0.3, // Parallax between 0.3-0.6 (slower than foreground)
+            hue: Math.random() * 360, // Random color hue
+            saturation: 40 + Math.random() * 40, // Saturation between 40-80%
+            lightness: 30 + Math.random() * 40, // Lightness between 30-70%
+            glowIntensity: 0.3 + Math.random() * 0.4, // Glow intensity for atmospheric effect
+            rotationSpeed: (Math.random() - 0.5) * 0.003 // Much slower rotation (was 0.02, now 0.003)
+        };
+        
+        // Add some variety with planet types
+        const planetType = Math.random();
+        if (planetType < 0.3) {
+            // Gas giant - larger with rings
+            planet.radius *= 1.5;
+            planet.hasRings = true;
+            planet.ringRadius = planet.radius * 1.8;
+            planet.lightness = Math.min(planet.lightness + 20, 80);
+        } else if (planetType < 0.6) {
+            // Rocky planet - smaller, more saturated
+            planet.radius *= 0.8;
+            planet.saturation = Math.min(planet.saturation + 30, 90);
+            planet.hasRings = false;
+        } else {
+            // Ice/desert planet - varying lightness
+            planet.lightness = Math.random() > 0.5 ? 
+                Math.min(planet.lightness + 30, 90) : // Ice planet (bright)
+                Math.max(planet.lightness - 20, 15);  // Desert planet (dark)
+            planet.hasRings = false;
+        }
+        
+        gameState.planets.push(planet);
+    }
 } 
