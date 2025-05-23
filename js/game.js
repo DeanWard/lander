@@ -42,12 +42,7 @@ function updateGame() {
         generateMoreTerrainAndPads();
     }
     
-    // Check for victory condition
-    if (gameState.visitedPads.size >= 5 && !gameState.gameWon) {
-        gameState.gameWon = true;
-        document.getElementById('finalTime').textContent = Math.floor((Date.now() - gameState.startTime) / 1000);
-        document.getElementById('victory').style.display = 'block';
-    }
+    // Victory condition removed - game continues until crash
 }
 
 function resetGame() {

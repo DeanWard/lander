@@ -114,17 +114,22 @@ function generateTerrainChunk(chunkIndex) {
         
         const pickups = [];
         
-        // Upgraded landing legs pickup
-        pickups.push({
-            x: pickupX,
-            y: pickupY,
-            type: 'upgradedLegs',
-            collected: false,
-            glow: Math.random() * Math.PI * 2,
-            bobOffset: Math.random() * Math.PI * 2
-        });
+        // Upgraded landing legs pickup - only spawn if not already upgraded
+        if (!gameState.lander.upgradedLegs) {
+            pickups.push({
+                x: pickupX,
+                y: pickupY,
+                type: 'upgradedLegs',
+                collected: false,
+                glow: Math.random() * Math.PI * 2,
+                bobOffset: Math.random() * Math.PI * 2
+            });
+        }
         
-        gameState.pickups.push(...pickups);
+        // Only add pickups if there are any to add
+        if (pickups.length > 0) {
+            gameState.pickups.push(...pickups);
+        }
     }
     
     // Add to game state

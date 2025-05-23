@@ -90,6 +90,13 @@ function checkPickupCollision() {
                     lander.upgradedLegs = true;
                     playLegsUpgradeSound();
                     
+                    // Remove all other existing leg pickups from the world
+                    gameState.pickups.forEach(otherPickup => {
+                        if (otherPickup.type === 'upgradedLegs' && !otherPickup.collected) {
+                            otherPickup.collected = true;
+                        }
+                    });
+                    
                     // Create collection particles
                     for (let i = 0; i < 15; i++) {
                         createParticle(
