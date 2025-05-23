@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, minimum-scale=1.0">
     <title>Neon Lunar Lander</title>
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
     <canvas id="gameCanvas"></canvas>
     
+    <!-- Touch indicator for mobile feedback -->
+    <div id="touchIndicator" class="touch-indicator"></div>
+    
     <div id="startScreen" class="neon-text">
         <h1 style="color: #00ffff;">NEON LUNAR LANDER</h1>
         <p>Visit as many landing pads as possible before crashing</p>
         <button id="startButton" class="neon-button">START MISSION</button>
-        <p style="color: #ffff00; font-size: 14px; margin-top: 10px;">Press SPACE to start</p>
+        <p style="color: #ffff00; font-size: 14px; margin-top: 10px;">Press SPACE or TAP to start</p>
     </div>
     
     <div id="ui" class="neon-text" style="display: none;">
@@ -50,14 +53,15 @@
     </div>
     
     <div id="controls" style="display: none;">
-        <div>↑ Thrust | ← → Rotate | Double-tap ↑ to launch from pad</div>
+        <div id="keyboardControls">↑ Thrust | ← → Rotate | Double-tap ↑ to launch from pad</div>
+        <div id="mobileControls" style="display: none;">📱 Swipe ↑ Thrust | Swipe ← → Rotate | Double-tap to launch</div>
         <div style="font-size: 12px; margin-top: 5px;">Press L to toggle leaderboard</div>
     </div>
     
     <div id="gameOver" class="neon-text">
         <h2 style="color: #ff0000;">LANDER DESTROYED!</h2>
         <div style="color: #00ffff;">Pads Visited: <span id="padsVisitedGameOver"></span></div>
-        <p style="color: #ffff00;">Press SPACE to try again</p>
+        <p style="color: #ffff00;">Press SPACE or TAP to try again</p>
     </div>
     
     <div id="victory" class="neon-text" style="border: 2px solid #00ff00; box-shadow: 0 0 30px #00ff00;">

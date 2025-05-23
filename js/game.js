@@ -131,6 +131,20 @@ function startGame() {
     document.getElementById('ui').style.display = 'block';
     document.getElementById('controls').style.display = 'block';
     
+    // Show appropriate controls based on device
+    const hasTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const keyboardControls = document.getElementById('keyboardControls');
+    const mobileControls = document.getElementById('mobileControls');
+    
+    if (hasTouch && isMobile) {
+        keyboardControls.style.display = 'none';
+        mobileControls.style.display = 'block';
+    } else {
+        keyboardControls.style.display = 'block';
+        mobileControls.style.display = 'none';
+    }
+    
     // Initialize terrain and game state
     generatedChunks = new Set();
     worldEndX = 0;
