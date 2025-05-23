@@ -19,15 +19,18 @@ function render() {
     // Draw planets (midground with parallax)
     drawPlanets();
     
+    // Draw asteroids (foreground parallax, closer than planets)
+    drawAsteroids();
+    
     if (!gameStarted) {
         return; // Don't render the rest if game hasn't started
     }
     
-    // Draw terrain with neon glow
-    ctx.strokeStyle = '#00ffff';
-    ctx.lineWidth = 2;
-    ctx.shadowColor = '#00ffff';
-    ctx.shadowBlur = 10;
+    // Draw terrain with moon-like regolith appearance
+    ctx.strokeStyle = '#8B7B6B'; // Dusty brownish-gray outline
+    ctx.lineWidth = 3;
+    ctx.shadowColor = '#5D5449';
+    ctx.shadowBlur = 5;
     
     ctx.beginPath();
     ctx.moveTo(0, canvas.height);
@@ -43,10 +46,12 @@ function render() {
     ctx.lineTo(canvas.width, canvas.height);
     ctx.closePath();
     
-    // Fill terrain with dark gradient
+    // Fill terrain with realistic moon regolith gradient
     const terrainGradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height);
-    terrainGradient.addColorStop(0, 'rgba(0, 255, 255, 0.1)');
-    terrainGradient.addColorStop(1, 'rgba(0, 255, 255, 0.3)');
+    terrainGradient.addColorStop(0, '#A59B8F'); // Lighter dusty gray at surface
+    terrainGradient.addColorStop(0.3, '#8B7B6B'); // Medium brownish-gray
+    terrainGradient.addColorStop(0.7, '#6B5E52'); // Darker brownish-gray
+    terrainGradient.addColorStop(1, '#4A3F35'); // Dark brown underground
     ctx.fillStyle = terrainGradient;
     ctx.fill();
     ctx.stroke();
@@ -55,6 +60,9 @@ function render() {
     
     // Draw holographic forcefield at x=0
     drawForcefield();
+    
+    // Draw moon bases around landing pads
+    drawMoonBases();
     
     // Draw landing pads
     drawLandingPads();
@@ -84,6 +92,9 @@ function render() {
     
     // Draw thrust effect
     drawThrustEffect();
+    
+    // Draw landing safety HUD
+    drawLandingSafetyHUD();
     
     // Update UI
     updateUI();
@@ -167,6 +178,124 @@ function drawPlanets() {
     });
 }
 
+function drawAsteroids() {
+    gameState.asteroids.forEach(asteroid => {
+        // Update asteroid position with drift
+        asteroid.x += asteroid.drift.x;
+        asteroid.y += asteroid.drift.y;
+        
+        // Update rotation
+        asteroid.rotation += asteroid.rotationSpeed;
+        
+        // Calculate parallax position
+        const parallaxX = asteroid.x - (gameState.cameraX * asteroid.parallaxFactor);
+        const parallaxY = asteroid.y;
+        
+        // Only draw if asteroid is visible (with some margin)
+        if (parallaxX + asteroid.size < -50 || parallaxX - asteroid.size > canvas.width + 50) {
+            return;
+        }
+        
+        ctx.save();
+        ctx.translate(parallaxX, parallaxY);
+        ctx.rotate(asteroid.rotation);
+        
+        // Asteroid color
+        const asteroidColor = `hsl(${asteroid.color.hue}, ${asteroid.color.saturation}%, ${asteroid.color.lightness}%)`;
+        const highlightColor = `hsl(${asteroid.color.hue}, ${asteroid.color.saturation}%, ${Math.min(asteroid.color.lightness + 15, 70)}%)`;
+        
+        ctx.fillStyle = asteroidColor;
+        ctx.strokeStyle = highlightColor;
+        ctx.lineWidth = 1;
+        
+        // Draw different asteroid shapes
+        ctx.beginPath();
+        
+        if (asteroid.shape === 0) {
+            // Irregular rocky shape
+            const points = 8;
+            for (let i = 0; i < points; i++) {
+                const angle = (i / points) * Math.PI * 2;
+                const variance = 0.7 + Math.random() * 0.6; // Random size variation
+                const radius = asteroid.size * variance;
+                const x = Math.cos(angle) * radius;
+                const y = Math.sin(angle) * radius;
+                
+                if (i === 0) {
+                    ctx.moveTo(x, y);
+                } else {
+                    ctx.lineTo(x, y);
+                }
+            }
+            ctx.closePath();
+        } else if (asteroid.shape === 1) {
+            // Angular crystalline shape
+            const x1 = -asteroid.size;
+            const y1 = asteroid.size * 0.3;
+            const x2 = -asteroid.size * 0.3;
+            const y2 = -asteroid.size;
+            const x3 = asteroid.size * 0.7;
+            const y3 = -asteroid.size * 0.5;
+            const x4 = asteroid.size;
+            const y4 = asteroid.size * 0.8;
+            const x5 = asteroid.size * 0.2;
+            const y5 = asteroid.size;
+            
+            ctx.moveTo(x1, y1);
+            ctx.lineTo(x2, y2);
+            ctx.lineTo(x3, y3);
+            ctx.lineTo(x4, y4);
+            ctx.lineTo(x5, y5);
+            ctx.closePath();
+        } else {
+            // Rounded lumpy shape
+            const segments = 6;
+            for (let i = 0; i < segments; i++) {
+                const angle1 = (i / segments) * Math.PI * 2;
+                const angle2 = ((i + 1) / segments) * Math.PI * 2;
+                const r1 = asteroid.size * (0.8 + Math.sin(i * 0.7) * 0.3);
+                const r2 = asteroid.size * (0.8 + Math.sin((i + 1) * 0.7) * 0.3);
+                
+                const x1 = Math.cos(angle1) * r1;
+                const y1 = Math.sin(angle1) * r1;
+                const x2 = Math.cos(angle2) * r2;
+                const y2 = Math.sin(angle2) * r2;
+                
+                if (i === 0) {
+                    ctx.moveTo(x1, y1);
+                }
+                
+                // Control points for curves
+                const cx1 = x1 + Math.cos(angle1 + Math.PI/2) * asteroid.size * 0.2;
+                const cy1 = y1 + Math.sin(angle1 + Math.PI/2) * asteroid.size * 0.2;
+                const cx2 = x2 + Math.cos(angle2 - Math.PI/2) * asteroid.size * 0.2;
+                const cy2 = y2 + Math.sin(angle2 - Math.PI/2) * asteroid.size * 0.2;
+                
+                ctx.bezierCurveTo(cx1, cy1, cx2, cy2, x2, y2);
+            }
+            ctx.closePath();
+        }
+        
+        ctx.fill();
+        ctx.stroke();
+        
+        // Add some surface detail
+        ctx.fillStyle = highlightColor;
+        const numSpots = Math.floor(asteroid.size / 10);
+        for (let i = 0; i < numSpots; i++) {
+            const spotX = (Math.random() - 0.5) * asteroid.size * 0.6;
+            const spotY = (Math.random() - 0.5) * asteroid.size * 0.6;
+            const spotSize = Math.random() * 2 + 1;
+            
+            ctx.beginPath();
+            ctx.arc(spotX, spotY, spotSize, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        
+        ctx.restore();
+    });
+}
+
 function drawForcefield() {
     const forcefieldScreenX = 0 - gameState.cameraX;
     if (forcefieldScreenX >= 0 && forcefieldScreenX <= canvas.width) {
@@ -223,6 +352,297 @@ function drawLandingPads() {
         ctx.fillText((pad.id + 1).toString(), centerX, pad.y - 10);
         
         ctx.shadowBlur = 0;
+    });
+}
+
+function drawMoonBases() {
+    gameState.landingPads.forEach(pad => {
+        const centerX = pad.x + pad.width / 2;
+        const padY = pad.y;
+        const baseScreenX = centerX - gameState.cameraX;
+        
+        // Skip if off-screen
+        if (baseScreenX < -200 || baseScreenX > canvas.width + 200) return;
+        
+        // Use pad ID as seed for consistent but different bases
+        const seed = pad.id;
+        
+        // Deterministic random function based on seed and index
+        const seededRandom = (index) => {
+            const x = Math.sin(seed * 12.9898 + index * 78.233) * 43758.5453;
+            return x - Math.floor(x);
+        };
+        
+        ctx.save();
+        
+        // Base structures around the landing pad
+        const structureRadius = 80; // Area around pad to place structures
+        const numStructures = 4 + Math.floor(seededRandom(0) * 4); // 4-7 structures per base
+        
+        for (let i = 0; i < numStructures; i++) {
+            const angle = seededRandom(i + 1) * Math.PI * 2;
+            const distance = 40 + seededRandom(i + 10) * 40; // Distance from pad center
+            const structureWorldX = centerX + Math.cos(angle) * distance; // World X coordinate
+            const structureX = structureWorldX - gameState.cameraX; // Screen X coordinate
+            
+            // Get the actual terrain height at this X position
+            const terrainHeight = getTerrainHeightAt(structureWorldX);
+            const structureY = terrainHeight - 2; // Place slightly above terrain surface
+            
+            // Skip if this structure is off-screen
+            if (structureX < -50 || structureX > canvas.width + 50) continue;
+            
+            const structureType = Math.floor(seededRandom(i + 30) * 5); // 5 different structure types
+            
+            ctx.save();
+            ctx.translate(structureX, structureY);
+            
+            // Base colors for moon base structures
+            const baseColor = '#CCCCCC';
+            const accentColor = '#EEEEEE';
+            const darkColor = '#999999';
+            const lightBlue = '#7FC7FF';
+            const orange = '#FFB366';
+            
+            switch (structureType) {
+                case 0: // Storage tank
+                    {
+                        const tankHeight = 15 + seededRandom(i + 40) * 10;
+                        const tankWidth = 8 + seededRandom(i + 50) * 6;
+                        
+                        // Tank body
+                        ctx.fillStyle = baseColor;
+                        ctx.strokeStyle = darkColor;
+                        ctx.lineWidth = 1;
+                        ctx.fillRect(-tankWidth/2, -tankHeight, tankWidth, tankHeight);
+                        ctx.strokeRect(-tankWidth/2, -tankHeight, tankWidth, tankHeight);
+                        
+                        // Tank top (rounded)
+                        ctx.beginPath();
+                        ctx.ellipse(0, -tankHeight, tankWidth/2, 3, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        
+                        // Tank details
+                        ctx.strokeStyle = accentColor;
+                        ctx.lineWidth = 0.5;
+                        for (let j = 1; j < 3; j++) {
+                            const y = -tankHeight + (tankHeight * j / 3);
+                            ctx.beginPath();
+                            ctx.moveTo(-tankWidth/2, y);
+                            ctx.lineTo(tankWidth/2, y);
+                            ctx.stroke();
+                        }
+                        
+                        // Pipes
+                        ctx.strokeStyle = darkColor;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(tankWidth/2, -tankHeight/2);
+                        ctx.lineTo(tankWidth/2 + 8, -tankHeight/2);
+                        ctx.lineTo(tankWidth/2 + 8, -tankHeight/2 + 5);
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                case 1: // Communication tower
+                    {
+                        const towerHeight = 25 + seededRandom(i + 60) * 15;
+                        
+                        // Tower base
+                        ctx.fillStyle = baseColor;
+                        ctx.strokeStyle = darkColor;
+                        ctx.lineWidth = 1;
+                        ctx.fillRect(-3, -8, 6, 8);
+                        ctx.strokeRect(-3, -8, 6, 8);
+                        
+                        // Tower mast
+                        ctx.strokeStyle = accentColor;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(0, -8);
+                        ctx.lineTo(0, -towerHeight);
+                        ctx.stroke();
+                        
+                        // Support struts
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.moveTo(-2, -8);
+                        ctx.lineTo(0, -towerHeight/2);
+                        ctx.lineTo(2, -8);
+                        ctx.stroke();
+                        
+                        // Antenna/dish at top
+                        ctx.fillStyle = lightBlue;
+                        ctx.strokeStyle = lightBlue;
+                        ctx.lineWidth = 1;
+                        ctx.beginPath();
+                        ctx.ellipse(0, -towerHeight, 4, 2, 0, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.stroke();
+                        
+                        // Signal indicator light
+                        const blinkPhase = (Date.now() / 1000 + seed) % 2;
+                        if (blinkPhase < 1) {
+                            ctx.fillStyle = '#FF4444';
+                            ctx.beginPath();
+                            ctx.arc(0, -towerHeight - 3, 1, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                    }
+                    break;
+                    
+                case 2: // Habitat module
+                    {
+                        const moduleWidth = 12 + seededRandom(i + 70) * 8;
+                        const moduleHeight = 8 + seededRandom(i + 80) * 4;
+                        
+                        // Main module body
+                        ctx.fillStyle = baseColor;
+                        ctx.strokeStyle = darkColor;
+                        ctx.lineWidth = 1;
+                        ctx.fillRect(-moduleWidth/2, -moduleHeight, moduleWidth, moduleHeight);
+                        ctx.strokeRect(-moduleWidth/2, -moduleHeight, moduleWidth, moduleHeight);
+                        
+                        // Airlock door
+                        ctx.fillStyle = darkColor;
+                        const doorWidth = 3;
+                        ctx.fillRect(-doorWidth/2, -moduleHeight/2, doorWidth, moduleHeight/2);
+                        ctx.strokeRect(-doorWidth/2, -moduleHeight/2, doorWidth, moduleHeight/2);
+                        
+                        // Windows
+                        ctx.fillStyle = lightBlue;
+                        const windowSize = 2;
+                        ctx.fillRect(-moduleWidth/2 + 2, -moduleHeight + 2, windowSize, windowSize);
+                        ctx.fillRect(moduleWidth/2 - 4, -moduleHeight + 2, windowSize, windowSize);
+                        
+                        // Roof details
+                        ctx.strokeStyle = accentColor;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(-moduleWidth/2, -moduleHeight);
+                        ctx.lineTo(moduleWidth/2, -moduleHeight);
+                        ctx.stroke();
+                    }
+                    break;
+                    
+                case 3: // Solar panel array
+                    {
+                        const panelWidth = 10 + seededRandom(i + 90) * 8;
+                        const panelHeight = 6;
+                        
+                        // Support post
+                        ctx.strokeStyle = darkColor;
+                        ctx.lineWidth = 2;
+                        ctx.beginPath();
+                        ctx.moveTo(0, 0);
+                        ctx.lineTo(0, -12);
+                        ctx.stroke();
+                        
+                        // Panel frame
+                        ctx.save();
+                        ctx.translate(0, -12);
+                        ctx.rotate(Math.PI / 6); // Angled for sun
+                        
+                        ctx.fillStyle = '#4A4A4A';
+                        ctx.strokeStyle = accentColor;
+                        ctx.lineWidth = 1;
+                        ctx.fillRect(-panelWidth/2, -panelHeight/2, panelWidth, panelHeight);
+                        ctx.strokeRect(-panelWidth/2, -panelHeight/2, panelWidth, panelHeight);
+                        
+                        // Solar cells grid
+                        ctx.strokeStyle = lightBlue;
+                        ctx.lineWidth = 0.5;
+                        for (let x = -panelWidth/2 + 2; x < panelWidth/2; x += 2) {
+                            ctx.beginPath();
+                            ctx.moveTo(x, -panelHeight/2);
+                            ctx.lineTo(x, panelHeight/2);
+                            ctx.stroke();
+                        }
+                        for (let y = -panelHeight/2 + 1; y < panelHeight/2; y += 1) {
+                            ctx.beginPath();
+                            ctx.moveTo(-panelWidth/2, y);
+                            ctx.lineTo(panelWidth/2, y);
+                            ctx.stroke();
+                        }
+                        
+                        ctx.restore();
+                    }
+                    break;
+                    
+                case 4: // Equipment/machinery
+                    {
+                        const equipWidth = 6 + seededRandom(i + 100) * 4;
+                        const equipHeight = 5 + seededRandom(i + 110) * 3;
+                        
+                        // Main equipment box
+                        ctx.fillStyle = darkColor;
+                        ctx.strokeStyle = accentColor;
+                        ctx.lineWidth = 1;
+                        ctx.fillRect(-equipWidth/2, -equipHeight, equipWidth, equipHeight);
+                        ctx.strokeRect(-equipWidth/2, -equipHeight, equipWidth, equipHeight);
+                        
+                        // Control panel
+                        ctx.fillStyle = '#333333';
+                        ctx.fillRect(-equipWidth/2 + 1, -equipHeight + 1, equipWidth - 2, 2);
+                        
+                        // Status lights
+                        const lights = 2 + Math.floor(seededRandom(i + 120) * 3);
+                        for (let l = 0; l < lights; l++) {
+                            const lightX = -equipWidth/2 + 2 + l * 2;
+                            const lightY = -equipHeight + 2;
+                            const lightColor = seededRandom(l + seed) > 0.5 ? '#00FF00' : '#FF0000';
+                            
+                            ctx.fillStyle = lightColor;
+                            ctx.beginPath();
+                            ctx.arc(lightX, lightY, 0.5, 0, Math.PI * 2);
+                            ctx.fill();
+                        }
+                        
+                        // Cooling vents
+                        ctx.strokeStyle = '#666666';
+                        ctx.lineWidth = 0.5;
+                        for (let v = 0; v < 3; v++) {
+                            const ventY = -equipHeight/2 + v - 1;
+                            ctx.beginPath();
+                            ctx.moveTo(-equipWidth/2 + 1, ventY);
+                            ctx.lineTo(equipWidth/2 - 1, ventY);
+                            ctx.stroke();
+                        }
+                    }
+                    break;
+            }
+            
+            ctx.restore();
+        }
+        
+        // Add connecting paths/roads between some structures
+        if (numStructures > 2) {
+            ctx.strokeStyle = '#888888';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([2, 2]);
+            
+            // Connect pad center to nearby structures
+            for (let i = 0; i < Math.min(2, numStructures); i++) {
+                const angle = seededRandom(i + 200) * Math.PI * 2;
+                const distance = 40 + seededRandom(i + 210) * 40;
+                const structureWorldX = centerX + Math.cos(angle) * distance;
+                const structureX = structureWorldX - gameState.cameraX;
+                const structureTerrainHeight = getTerrainHeightAt(structureWorldX);
+                const structureY = structureTerrainHeight - 2;
+                
+                if (structureX > -50 && structureX < canvas.width + 50) {
+                    ctx.beginPath();
+                    ctx.moveTo(baseScreenX, padY - 2);
+                    ctx.lineTo(structureX, structureY);
+                    ctx.stroke();
+                }
+            }
+            
+            ctx.setLineDash([]); // Reset line dash
+        }
+        
+        ctx.restore();
     });
 }
 
@@ -843,4 +1263,119 @@ function toggleLeaderboard() {
         leaderboard.style.display = 'none';
         button.textContent = 'SHOW';
     }
+}
+
+function drawLandingSafetyHUD() {
+    const lander = gameState.lander;
+    
+    // Only show HUD when lander is not landed and not crashed
+    if (lander.landed || gameState.crashed || gameState.gameWon) return;
+    
+    // Check if lander is near any landing pad
+    let nearestPad = null;
+    let minDistance = Infinity;
+    const proximityThreshold = 150; // Show HUD when within this distance of a pad
+    
+    for (const pad of gameState.landingPads) {
+        const padCenterX = pad.x + pad.width / 2;
+        const distance = Math.sqrt(
+            Math.pow(lander.x - padCenterX, 2) + 
+            Math.pow(lander.y - pad.y, 2)
+        );
+        
+        if (distance < proximityThreshold && distance < minDistance) {
+            minDistance = distance;
+            nearestPad = pad;
+        }
+    }
+    
+    // Only show HUD if near a pad
+    if (!nearestPad) return;
+    
+    // Determine safe landing parameters based on upgraded legs
+    const maxAngle = lander.upgradedLegs ? 1.2 : 0.5;
+    const currentAngle = Math.abs(lander.angle);
+    const isSafeAngle = currentAngle < maxAngle;
+    
+    // Calculate HUD position (in screen space)
+    const hudX = lander.x - gameState.cameraX;
+    const hudY = lander.y;
+    const hudRadius = 35;
+    
+    ctx.save();
+    ctx.translate(hudX, hudY);
+    
+    // Draw outer ring with animated pulse
+    const time = Date.now() * 0.005;
+    const pulseIntensity = 0.8 + 0.2 * Math.sin(time);
+    
+    // Ring color based on safety
+    const ringColor = isSafeAngle ? '#00ff00' : '#ff4444';
+    const ringAlpha = isSafeAngle ? 0.3 : 0.4;
+    
+    ctx.strokeStyle = `rgba(${isSafeAngle ? '0, 255, 0' : '255, 68, 68'}, ${ringAlpha * pulseIntensity})`;
+    ctx.lineWidth = 2;
+    ctx.shadowColor = ringColor;
+    ctx.shadowBlur = 4;
+    
+    ctx.beginPath();
+    ctx.arc(0, 0, hudRadius, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    // Draw angle indicator arcs
+    const safeArcStart = -Math.PI / 2 - maxAngle;
+    const safeArcEnd = -Math.PI / 2 + maxAngle;
+    
+    // Safe zone arc (green)
+    ctx.strokeStyle = `rgba(0, 255, 0, 0.2)`;
+    ctx.lineWidth = 4;
+    ctx.shadowBlur = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, hudRadius - 5, safeArcStart, safeArcEnd);
+    ctx.stroke();
+    
+    // Current angle indicator (needle)
+    const needleAngle = -Math.PI / 2 + lander.angle;
+    const needleLength = hudRadius - 3;
+    
+    ctx.strokeStyle = isSafeAngle ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
+    ctx.lineWidth = 2;
+    ctx.shadowColor = ctx.strokeStyle;
+    ctx.shadowBlur = 3;
+    
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(
+        Math.cos(needleAngle) * needleLength,
+        Math.sin(needleAngle) * needleLength
+    );
+    ctx.stroke();
+    
+    // Draw center dot
+    ctx.fillStyle = isSafeAngle ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)';
+    ctx.shadowBlur = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Draw status text
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = isSafeAngle ? '#00ff00' : '#ff4444';
+    ctx.font = 'bold 12px Courier New';
+    ctx.textAlign = 'center';
+    
+    if (lander.upgradedLegs) {
+        ctx.font = '10px Courier New';
+        ctx.fillStyle = 'rgba(255, 165, 0, 0.5)';
+        ctx.fillText('UPGRADED LEGS', 0, hudRadius + 20);
+    }
+    
+    // Draw angle value
+    ctx.font = '10px Courier New';
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+    ctx.fillText(`${(Math.abs(lander.angle) * 180 / Math.PI).toFixed(1)}°`, 0, -hudRadius - 10);
+    ctx.fillText(`Max: ${(maxAngle * 180 / Math.PI).toFixed(1)}°`, 0, -hudRadius + 5);
+    
+    ctx.restore();
+    ctx.shadowBlur = 0;
 } 

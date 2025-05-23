@@ -29,6 +29,7 @@ let gameState = {
     particles: [],
     stars: [],
     planets: [],
+    asteroids: [],
     startTime: 0,
     gameWon: false,
     crashed: false,

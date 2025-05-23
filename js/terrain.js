@@ -214,11 +214,11 @@ function generateStars() {
 // Generate planets for midground parallax effect
 function generatePlanets() {
     gameState.planets = [];
-    const numPlanets = Math.floor(canvas.width / 600) + 2; // About one planet per 600 pixels of screen width
+    const numPlanets = Math.floor(canvas.width / 200) + 8; // More planets for the larger area
     
     for (let i = 0; i < numPlanets; i++) {
         const planet = {
-            x: Math.random() * canvas.width * 3, // Spread planets across a wider area
+            x: Math.random() * canvas.width * 20, // Spread planets across a much wider area
             y: Math.random() * canvas.height * 0.4 + canvas.height * 0.1, // Upper 40% of screen, offset down a bit
             radius: Math.random() * 120 + 60, // Size between 60-180 pixels (much bigger!)
             parallaxFactor: 0.3 + Math.random() * 0.3, // Parallax between 0.3-0.6 (slower than foreground)
@@ -251,5 +251,34 @@ function generatePlanets() {
         }
         
         gameState.planets.push(planet);
+    }
+}
+
+// Generate floating asteroids for foreground parallax effect
+function generateAsteroids() {
+    gameState.asteroids = [];
+    const numAsteroids = Math.floor(canvas.width / 150) + 10; // More asteroids for the larger area
+    
+    for (let i = 0; i < numAsteroids; i++) {
+        const asteroid = {
+            x: Math.random() * canvas.width * 20, // Spread asteroids across a much wider area
+            y: Math.random() * canvas.height * 0.35 + canvas.height * 0.05, // Upper 35% of screen, starting at 5%
+            size: Math.random() * 25 + 8, // Size between 8-33 pixels
+            parallaxFactor: 0.7 + Math.random() * 0.2, // Parallax between 0.7-0.9 (closer than planets)
+            rotation: Math.random() * Math.PI * 2, // Random initial rotation
+            rotationSpeed: (Math.random() - 0.5) * 0.005, // Slower rotation speed
+            drift: {
+                x: (Math.random() - 0.5) * 0.3, // Horizontal drift
+                y: (Math.random() - 0.5) * 0.2  // Vertical drift
+            },
+            shape: Math.floor(Math.random() * 3), // 0, 1, or 2 for different shapes
+            color: {
+                hue: 200 + Math.random() * 60, // Bluish to cyan hues (200-260)
+                saturation: 20 + Math.random() * 30, // Low saturation for rock-like appearance
+                lightness: 25 + Math.random() * 25 // Fairly dark
+            }
+        };
+        
+        gameState.asteroids.push(asteroid);
     }
 } 
