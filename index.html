@@ -13,6 +13,7 @@
         <h1 style="color: #00ffff;">NEON LUNAR LANDER</h1>
         <p>Visit as many landing pads as possible before crashing</p>
         <button id="startButton" class="neon-button">START MISSION</button>
+        <p style="color: #ffff00; font-size: 14px; margin-top: 10px;">Press SPACE to start</p>
     </div>
     
     <div id="ui" class="neon-text" style="display: none;">
@@ -21,6 +22,8 @@
         <div>Pads Visited: <span id="pads">0</span></div>
         <div>Time: <span id="time">0</span>s</div>
         <div id="upgrades" style="color: #ffa500; display: none;">⚙️ Upgraded Legs</div>
+        <div id="fuelEfficiency" style="color: #00ffff; display: none;">🔋 Fuel Efficiency: <span id="fuelEfficiencyTimer"></span>s</div>
+        <div id="pickupAttractor" style="color: #ff69b4; display: none;">🧲 Pickup Attractor: <span id="pickupAttractorTimer"></span>s</div>
     </div>
     
     <div id="controls" style="display: none;">

@@ -1,0 +1,2 @@
+const supabase_url = "https://txlcbandjqfdkyantcid.supabase.co"
+const supabase_key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR4bGNiYW5kanFmZGt5YW50Y2lkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDgwMjY4MjIsImV4cCI6MjA2MzYwMjgyMn0.atonpqQS699ly5Yz9ZeQKySXKHPtpzupM20Js7p8Vqc"

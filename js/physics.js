@@ -108,6 +108,41 @@ function checkPickupCollision() {
                             40
                         );
                     }
+                } else if (pickup.type === 'fuelEfficiency') {
+                    // Activate fuel efficiency module for 45 seconds (2700 frames at 60fps)
+                    gameState.fuelEfficiencyActive = true;
+                    gameState.fuelEfficiencyTimer = 2700;
+                    playLegsUpgradeSound(); // Reuse the same sound effect for now
+                    
+                    // Create blue/cyan collection particles for fuel items
+                    for (let i = 0; i < 20; i++) {
+                        createParticle(
+                            pickup.x + (Math.random() - 0.5) * 20,
+                            pickup.y + (Math.random() - 0.5) * 20,
+                            (Math.random() - 0.5) * 4,
+                            -Math.random() * 3,
+                            `hsl(${Math.random() * 60 + 180}, 100%, 60%)`, // Blue/cyan colors
+                            50
+                        );
+                    }
+                } else if (pickup.type === 'pickupAttractor') {
+                    // Activate pickup attractor for 190 seconds (11400 frames at 60fps)
+                    gameState.pickupAttractorActive = true;
+                    gameState.pickupAttractorTimer = 11400;
+                    playLegsUpgradeSound(); // Reuse the same sound effect for now
+                    
+                    // Create rainbow collection particles for advanced items
+                    for (let i = 0; i < 25; i++) {
+                        const hue = (i / 25) * 360; // Create rainbow spread
+                        createParticle(
+                            pickup.x + (Math.random() - 0.5) * 20,
+                            pickup.y + (Math.random() - 0.5) * 20,
+                            (Math.random() - 0.5) * 4,
+                            -Math.random() * 3,
+                            `hsl(${hue}, 100%, 60%)`, // Rainbow colors
+                            60
+                        );
+                    }
                 }
             }
         }
@@ -253,6 +288,48 @@ function updatePhysics() {
         if (gameState.invulnerableTimer <= 0) {
             gameState.invulnerable = false;
             gameState.invulnerableTimer = 0;
+        }
+    }
+    
+    // Handle fuel efficiency timer
+    if (gameState.fuelEfficiencyActive) {
+        gameState.fuelEfficiencyTimer--;
+        if (gameState.fuelEfficiencyTimer <= 0) {
+            gameState.fuelEfficiencyActive = false;
+            gameState.fuelEfficiencyTimer = 0;
+        }
+    }
+    
+    // Handle pickup attractor timer and attraction logic
+    if (gameState.pickupAttractorActive) {
+        gameState.pickupAttractorTimer--;
+        if (gameState.pickupAttractorTimer <= 0) {
+            gameState.pickupAttractorActive = false;
+            gameState.pickupAttractorTimer = 0;
+        } else {
+            // Apply attraction force to nearby pickups
+            gameState.pickups.forEach(pickup => {
+                if (!pickup.collected) {
+                    const dx = gameState.lander.x - pickup.x;
+                    const dy = gameState.lander.y - pickup.y;
+                    const distance = Math.sqrt(dx * dx + dy * dy);
+                    
+                    // If pickup is within attraction range
+                    if (distance <= gameState.pickupAttractorRange && distance > 0) {
+                        // Calculate attraction force (stronger when closer)
+                        const attractionStrength = 0.5; // Base attraction strength
+                        const force = attractionStrength * (1 - distance / gameState.pickupAttractorRange);
+                        
+                        // Normalize direction and apply force
+                        const forceX = (dx / distance) * force;
+                        const forceY = (dy / distance) * force;
+                        
+                        // Apply attraction by moving pickup toward lander
+                        pickup.x += forceX;
+                        pickup.y += forceY;
+                    }
+                }
+            });
         }
     }
     

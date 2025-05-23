@@ -39,7 +39,13 @@ let gameState = {
     rotationActive: false,
     invulnerable: false,
     invulnerableTimer: 0,
-    cameraX: 0
+    cameraX: 0,
+    fuelEfficiencyActive: false,
+    fuelEfficiencyTimer: 0,
+    fuelEfficiencyMultiplier: 0.5, // 50% of normal consumption (0.1 instead of 0.2)
+    pickupAttractorActive: false,
+    pickupAttractorTimer: 0,
+    pickupAttractorRange: 120 // Attraction radius in pixels
 };
 
 // Canvas setup

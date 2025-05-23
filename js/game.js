@@ -82,7 +82,13 @@ function resetGame() {
         rotationActive: false,
         invulnerable: false,
         invulnerableTimer: 0,
-        cameraX: 0
+        cameraX: 0,
+        fuelEfficiencyActive: false,
+        fuelEfficiencyTimer: 0,
+        fuelEfficiencyMultiplier: 0.5,
+        pickupAttractorActive: false,
+        pickupAttractorTimer: 0,
+        pickupAttractorRange: 120
     };
     
     generateStars();

@@ -114,8 +114,33 @@ function generateTerrainChunk(chunkIndex) {
         
         const pickups = [];
         
-        // Upgraded landing legs pickup - only spawn if not already upgraded
-        if (!gameState.lander.upgradedLegs) {
+        // Fuel efficiency module pickup - 35% chance of spawning
+        if (Math.random() < 0.35) {
+            pickups.push({
+                x: pickupX,
+                y: pickupY,
+                type: 'fuelEfficiency',
+                collected: false,
+                glow: Math.random() * Math.PI * 2,
+                bobOffset: Math.random() * Math.PI * 2
+            });
+        }
+        
+        // Pickup attractor - 22% chance of spawning (uncommon)
+        if (Math.random() < 0.22 && pickups.length === 0) {
+            pickups.push({
+                x: pickupX,
+                y: pickupY,
+                type: 'pickupAttractor',
+                collected: false,
+                glow: Math.random() * Math.PI * 2,
+                bobOffset: Math.random() * Math.PI * 2,
+                rainbowHue: Math.random() * 360 // For rainbow effect
+            });
+        }
+        
+        // Upgraded landing legs pickup - only spawn if not already upgraded and no other pickups
+        if (!gameState.lander.upgradedLegs && pickups.length === 0) {
             pickups.push({
                 x: pickupX,
                 y: pickupY,

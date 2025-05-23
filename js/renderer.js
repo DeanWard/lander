@@ -62,6 +62,11 @@ function render() {
     // Draw lander
     drawLander();
     
+    // Draw attraction field if pickup attractor is active
+    if (gameState.pickupAttractorActive) {
+        drawAttractionField();
+    }
+    
     // Draw particles
     drawParticles();
     
@@ -186,6 +191,110 @@ function drawPickups() {
                 ctx.font = '10px Courier New';
                 ctx.textAlign = 'center';
                 ctx.fillText('LEGS', 0, 25);
+                
+                ctx.restore();
+                ctx.shadowBlur = 0;
+            } else if (pickup.type === 'fuelEfficiency') {
+                // Draw fuel efficiency pickup
+                const glowIntensity = 0.5 + 0.5 * Math.sin(pickup.glow);
+                
+                ctx.save();
+                ctx.translate(pickupScreenX, pickupY);
+                
+                // Glow effect
+                ctx.shadowColor = '#00ffff';
+                ctx.shadowBlur = 15 * glowIntensity;
+                
+                // Draw battery icon
+                ctx.strokeStyle = '#00ffff';
+                ctx.fillStyle = 'rgba(0, 255, 255, 0.6)';
+                ctx.lineWidth = 2;
+                
+                // Battery body
+                ctx.beginPath();
+                ctx.rect(-8, -6, 16, 12);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Battery terminal
+                ctx.beginPath();
+                ctx.rect(8, -3, 3, 6);
+                ctx.fill();
+                ctx.stroke();
+                
+                // Battery charge indicator bars
+                ctx.fillStyle = '#00ffff';
+                for (let i = 0; i < 3; i++) {
+                    ctx.fillRect(-6 + i * 4, -3, 2, 6);
+                }
+                
+                // Label
+                ctx.shadowBlur = 5;
+                ctx.fillStyle = '#00ffff';
+                ctx.font = '9px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText('FUEL+', 0, 25);
+                
+                ctx.restore();
+                ctx.shadowBlur = 0;
+            } else if (pickup.type === 'pickupAttractor') {
+                // Draw pickup attractor with rainbow effect
+                const glowIntensity = 0.5 + 0.5 * Math.sin(pickup.glow);
+                
+                ctx.save();
+                ctx.translate(pickupScreenX, pickupY);
+                
+                // Update rainbow hue for animation
+                pickup.rainbowHue = (pickup.rainbowHue + 2) % 360;
+                
+                // Create rainbow glow effect
+                const rainbowColor = `hsl(${pickup.rainbowHue}, 100%, 50%)`;
+                ctx.shadowColor = rainbowColor;
+                ctx.shadowBlur = 20 * glowIntensity;
+                
+                // Draw magnet/attractor icon
+                ctx.strokeStyle = rainbowColor;
+                ctx.fillStyle = `hsla(${pickup.rainbowHue}, 100%, 50%, 0.6)`;
+                ctx.lineWidth = 2;
+                
+                // Magnet horseshoe shape
+                ctx.beginPath();
+                ctx.arc(0, 0, 10, 0, Math.PI, false); // Horseshoe arc
+                ctx.stroke();
+                
+                // Magnet poles
+                ctx.beginPath();
+                ctx.moveTo(-10, 0);
+                ctx.lineTo(-10, 8);
+                ctx.moveTo(10, 0);
+                ctx.lineTo(10, 8);
+                ctx.stroke();
+                
+                // Attraction field lines (animated)
+                ctx.lineWidth = 1;
+                const fieldIntensity = 0.3 + 0.3 * Math.sin(pickup.glow * 2);
+                ctx.globalAlpha = fieldIntensity;
+                
+                for (let i = 0; i < 6; i++) {
+                    const angle = (i / 6) * Math.PI * 2;
+                    const radius = 15 + 5 * Math.sin(pickup.glow + i);
+                    const endX = Math.cos(angle) * radius;
+                    const endY = Math.sin(angle) * radius;
+                    
+                    ctx.beginPath();
+                    ctx.moveTo(Math.cos(angle) * 8, Math.sin(angle) * 8);
+                    ctx.lineTo(endX, endY);
+                    ctx.stroke();
+                }
+                
+                ctx.globalAlpha = 1;
+                
+                // Label with rainbow effect
+                ctx.shadowBlur = 8;
+                ctx.fillStyle = rainbowColor;
+                ctx.font = '9px Courier New';
+                ctx.textAlign = 'center';
+                ctx.fillText('MAGNET', 0, 25);
                 
                 ctx.restore();
                 ctx.shadowBlur = 0;
@@ -326,4 +435,52 @@ function updateUI() {
     } else {
         upgradesElement.style.display = 'none';
     }
+    
+    // Update fuel efficiency display
+    const fuelEfficiencyElement = document.getElementById('fuelEfficiency');
+    if (gameState.fuelEfficiencyActive) {
+        fuelEfficiencyElement.style.display = 'block';
+        const remainingSeconds = Math.ceil(gameState.fuelEfficiencyTimer / 60); // Convert frames to seconds
+        document.getElementById('fuelEfficiencyTimer').textContent = remainingSeconds;
+    } else {
+        fuelEfficiencyElement.style.display = 'none';
+    }
+    
+    // Update pickup attractor display
+    const pickupAttractorElement = document.getElementById('pickupAttractor');
+    if (gameState.pickupAttractorActive) {
+        pickupAttractorElement.style.display = 'block';
+        const remainingSeconds = Math.ceil(gameState.pickupAttractorTimer / 60); // Convert frames to seconds
+        document.getElementById('pickupAttractorTimer').textContent = remainingSeconds;
+    } else {
+        pickupAttractorElement.style.display = 'none';
+    }
+}
+
+function drawAttractionField() {
+    const lander = gameState.lander;
+    const time = Date.now() * 0.003;
+    
+    ctx.save();
+    ctx.translate(lander.x - gameState.cameraX, lander.y);
+    
+    // Draw attraction field ring with rainbow effect
+    const numRings = 3;
+    for (let ring = 0; ring < numRings; ring++) {
+        const radius = gameState.pickupAttractorRange * (0.7 + ring * 0.15);
+        const alpha = 0.15 - ring * 0.04;
+        const hue = (time * 60 + ring * 120) % 360;
+        
+        ctx.strokeStyle = `hsla(${hue}, 100%, 50%, ${alpha})`;
+        ctx.lineWidth = 2;
+        ctx.shadowColor = `hsl(${hue}, 100%, 50%)`;
+        ctx.shadowBlur = 5;
+        
+        ctx.beginPath();
+        ctx.arc(0, 0, radius, 0, Math.PI * 2);
+        ctx.stroke();
+    }
+    
+    ctx.restore();
+    ctx.shadowBlur = 0;
 } 

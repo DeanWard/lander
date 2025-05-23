@@ -3,7 +3,13 @@
 const keys = {};
 
 document.addEventListener('keydown', (e) => {
-    if (!gameStarted) return; // Ignore key presses before game starts
+    // Handle space key to start game when on start screen
+    if (!gameStarted && e.code === 'Space') {
+        startGame();
+        return;
+    }
+    
+    if (!gameStarted) return; // Ignore other key presses before game starts
     
     keys[e.code] = true;
     
@@ -61,7 +67,11 @@ function handleInput() {
             const thrust = 0.08;
             lander.vx += Math.sin(lander.angle) * thrust;
             lander.vy -= Math.cos(lander.angle) * thrust;
-            lander.fuel -= 0.2;
+            
+            // Apply fuel efficiency if active
+            const fuelConsumption = gameState.fuelEfficiencyActive ? 
+                0.2 * gameState.fuelEfficiencyMultiplier : 0.2;
+            lander.fuel -= fuelConsumption;
         }
         
         // Handle hiss sound for rotation
