@@ -167,7 +167,7 @@ function generateTerrainChunk(chunkIndex) {
 function updateTerrainGeneration() {
     // Calculate which chunks should exist based on lander position
     const currentChunk = Math.floor(gameState.lander.x / CHUNK_WIDTH);
-    const viewDistance = 2; // Generate this many chunks ahead
+    const viewDistance = 5; // Generate this many chunks ahead (increased from 2 to 5)
     
     for (let i = Math.max(0, currentChunk - 1); i <= currentChunk + viewDistance; i++) {
         generateTerrainChunk(i);
@@ -222,7 +222,7 @@ function generatePlanets() {
             y: Math.random() * canvas.height * 0.4 + canvas.height * 0.1, // Upper 40% of screen, offset down a bit
             radius: Math.random() * 120 + 60, // Size between 60-180 pixels (much bigger!)
             parallaxFactor: 0.3 + Math.random() * 0.3, // Parallax between 0.3-0.6 (slower than foreground)
-            hue: Math.random() * 360, // Random color hue
+            hue: getRandomSynthwaveHue(), // Synthwave color hues
             saturation: 40 + Math.random() * 40, // Saturation between 40-80%
             lightness: 30 + Math.random() * 40, // Lightness between 30-70%
             glowIntensity: 0.3 + Math.random() * 0.4, // Glow intensity for atmospheric effect
@@ -273,12 +273,26 @@ function generateAsteroids() {
             },
             shape: Math.floor(Math.random() * 3), // 0, 1, or 2 for different shapes
             color: {
-                hue: 200 + Math.random() * 60, // Bluish to cyan hues (200-260)
-                saturation: 20 + Math.random() * 30, // Low saturation for rock-like appearance
+                hue: getRandomSynthwaveHue(), // Synthwave colors
+                saturation: 30 + Math.random() * 40, // Higher saturation for more vibrant colors
                 lightness: 25 + Math.random() * 25 // Fairly dark
             }
         };
         
         gameState.asteroids.push(asteroid);
     }
+}
+
+// Generate synthwave-appropriate hues (pinks, purples, cyans)
+function getRandomSynthwaveHue() {
+    const synthwaveHues = [
+        300, 310, 320, 330, // Magentas and pinks
+        270, 280, 290,      // Purples
+        180, 190, 200,      // Cyans
+        240, 250, 260       // Blue-purples
+    ];
+    
+    const baseHue = synthwaveHues[Math.floor(Math.random() * synthwaveHues.length)];
+    // Add some variation around the base hue
+    return baseHue + (Math.random() - 0.5) * 20;
 } 

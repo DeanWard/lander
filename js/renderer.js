@@ -1,11 +1,12 @@
 // Rendering functions
 
 function render() {
-    // Clear canvas with gradient background
+    // Clear canvas with gradient background - synthwave aesthetic
     const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
-    gradient.addColorStop(0, '#000011');
-    gradient.addColorStop(0.3, '#000033');
-    gradient.addColorStop(1, '#000000');
+    gradient.addColorStop(0, '#ff69b4'); // Hot pink at top
+    gradient.addColorStop(0.3, '#ba55d3'); // Medium orchid
+    gradient.addColorStop(0.6, '#9370db'); // Medium purple  
+    gradient.addColorStop(1, '#4b0082'); // Indigo at bottom
     ctx.fillStyle = gradient;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
     
@@ -15,6 +16,12 @@ function render() {
         ctx.fillStyle = `rgba(255, 255, 255, ${brightness})`;
         ctx.fillRect(star.x, star.y, 2, 2);
     });
+    
+    // Draw large moon/sun for synthwave aesthetic
+    drawSynthwaveMoon();
+    
+    // Draw layered mountain silhouettes for synthwave aesthetic
+    drawMountainLayers();
     
     // Draw planets (midground with parallax)
     drawPlanets();
@@ -26,11 +33,11 @@ function render() {
         return; // Don't render the rest if game hasn't started
     }
     
-    // Draw terrain with moon-like regolith appearance
-    ctx.strokeStyle = '#8B7B6B'; // Dusty brownish-gray outline
+    // Draw terrain with synthwave aesthetic
+    ctx.strokeStyle = '#00d4aa'; // Bright cyan outline
     ctx.lineWidth = 3;
-    ctx.shadowColor = '#5D5449';
-    ctx.shadowBlur = 5;
+    ctx.shadowColor = '#ff69b4';
+    ctx.shadowBlur = 8;
     
     ctx.beginPath();
     ctx.moveTo(0, canvas.height);
@@ -46,12 +53,12 @@ function render() {
     ctx.lineTo(canvas.width, canvas.height);
     ctx.closePath();
     
-    // Fill terrain with realistic moon regolith gradient
+    // Fill terrain with synthwave cyan/turquoise gradient
     const terrainGradient = ctx.createLinearGradient(0, canvas.height * 0.5, 0, canvas.height);
-    terrainGradient.addColorStop(0, '#A59B8F'); // Lighter dusty gray at surface
-    terrainGradient.addColorStop(0.3, '#8B7B6B'); // Medium brownish-gray
-    terrainGradient.addColorStop(0.7, '#6B5E52'); // Darker brownish-gray
-    terrainGradient.addColorStop(1, '#4A3F35'); // Dark brown underground
+    terrainGradient.addColorStop(0, '#40e0d0'); // Turquoise at surface
+    terrainGradient.addColorStop(0.3, '#00ced1'); // Dark turquoise
+    terrainGradient.addColorStop(0.7, '#008b8b'); // Dark cyan
+    terrainGradient.addColorStop(1, '#006666'); // Deep teal underground
     ctx.fillStyle = terrainGradient;
     ctx.fill();
     ctx.stroke();
@@ -95,6 +102,9 @@ function render() {
     
     // Draw landing safety HUD
     drawLandingSafetyHUD();
+    
+    // Draw off-screen indicator if lander is above the screen
+    drawOffScreenIndicator();
     
     // Update UI
     updateUI();
@@ -814,10 +824,10 @@ function drawLander() {
     ctx.rotate(lander.angle);
     
     // Lander body with neon effect
-    ctx.strokeStyle = '#ff00ff';
-    ctx.fillStyle = 'rgba(255, 0, 255, 0.3)';
+    ctx.strokeStyle = '#00ffff';
+    ctx.fillStyle = 'rgba(0, 255, 255, 0.3)';
     ctx.lineWidth = 2;
-    ctx.shadowColor = '#ff00ff';
+    ctx.shadowColor = '#00ffff';
     ctx.shadowBlur = 8;
     
     ctx.beginPath();
@@ -859,7 +869,7 @@ function drawLander() {
         ctx.stroke();
         
         // Reset stroke style
-        ctx.strokeStyle = '#ff00ff';
+        ctx.strokeStyle = '#00ffff';
         ctx.lineWidth = 2;
         ctx.shadowBlur = 0;
     } else {
@@ -969,7 +979,17 @@ function updateUI() {
     document.getElementById('fuel').textContent = Math.floor(gameState.lander.fuel);
     const speed = Math.sqrt(gameState.lander.vx ** 2 + gameState.lander.vy ** 2);
     document.getElementById('speed').textContent = speed.toFixed(1);
-    document.getElementById('pads').textContent = gameState.visitedPads.size;
+    
+    // Update score display based on game mode
+    if (gameState.gameMode === 'distance') {
+        document.getElementById('padsLabel').textContent = 'Highest Pad';
+        const highestPad = gameState.highestPadReached >= 0 ? (gameState.highestPadReached + 1) : 0;
+        document.getElementById('pads').textContent = `${highestPad} (of ${gameState.visitedPads.size})`;
+    } else {
+        document.getElementById('padsLabel').textContent = 'Pads Visited';
+        document.getElementById('pads').textContent = gameState.visitedPads.size;
+    }
+    
     document.getElementById('time').textContent = Math.floor((Date.now() - gameState.startTime) / 1000);
     
     // Update personal best
@@ -1378,4 +1398,203 @@ function drawLandingSafetyHUD() {
     
     ctx.restore();
     ctx.shadowBlur = 0;
+}
+
+function drawMountainLayers() {
+    // Draw layered mountain silhouettes for synthwave aesthetic
+    const mountainLayers = [
+        { 
+            parallax: 0.1, 
+            color: 'rgba(147, 112, 219, 0.8)', // Medium slate blue
+            height: 0.4,
+            peaks: 6
+        },
+        { 
+            parallax: 0.3, 
+            color: 'rgba(138, 43, 226, 0.7)', // Blue violet
+            height: 0.5,
+            peaks: 8
+        },
+        { 
+            parallax: 0.5, 
+            color: 'rgba(75, 0, 130, 0.6)', // Indigo
+            height: 0.6,
+            peaks: 10
+        }
+    ];
+    
+    mountainLayers.forEach((layer, layerIndex) => {
+        ctx.save();
+        ctx.fillStyle = layer.color;
+        
+        // Calculate parallax offset
+        const parallaxOffset = gameState.cameraX * layer.parallax;
+        
+        ctx.beginPath();
+        
+        // Start from bottom left
+        ctx.moveTo(0, canvas.height);
+        
+        // Generate mountain peaks
+        const peakWidth = canvas.width / layer.peaks;
+        for (let i = 0; i <= layer.peaks; i++) {
+            const x = i * peakWidth - parallaxOffset;
+            const baseHeight = canvas.height * layer.height;
+            const variation = Math.sin(x * 0.01 + layerIndex) * 50;
+            const y = baseHeight + variation;
+            
+            if (i === 0) {
+                ctx.lineTo(x, y);
+            } else {
+                // Create smooth mountain curves
+                const prevX = (i - 1) * peakWidth - parallaxOffset;
+                const midX = prevX + peakWidth / 2;
+                const midY = y + Math.sin(midX * 0.008 + layerIndex * 2) * 30;
+                
+                ctx.quadraticCurveTo(midX, midY, x, y);
+            }
+        }
+        
+        // Close the path to fill the mountain
+        ctx.lineTo(canvas.width + 100, canvas.height);
+        ctx.lineTo(0, canvas.height);
+        ctx.closePath();
+        
+        ctx.fill();
+        ctx.restore();
+    });
+}
+
+function drawSynthwaveMoon() {
+    // Draw a large moon in the background with subtle parallax
+    const moonX = canvas.width * 0.7 - (gameState.cameraX * 0.05); // Subtle parallax
+    const moonY = canvas.height * 0.25;
+    const moonRadius = 80;
+    
+    ctx.save();
+    
+    // Moon glow
+    const glowGradient = ctx.createRadialGradient(moonX, moonY, moonRadius * 0.5, moonX, moonY, moonRadius * 2);
+    glowGradient.addColorStop(0, 'rgba(255, 255, 255, 0)');
+    glowGradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.1)');
+    glowGradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = glowGradient;
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, moonRadius * 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Moon body
+    const moonGradient = ctx.createRadialGradient(
+        moonX - moonRadius * 0.3, moonY - moonRadius * 0.3, 0,
+        moonX, moonY, moonRadius
+    );
+    moonGradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    moonGradient.addColorStop(0.7, 'rgba(240, 240, 240, 0.8)');
+    moonGradient.addColorStop(1, 'rgba(200, 200, 200, 0.6)');
+    
+    ctx.fillStyle = moonGradient;
+    ctx.beginPath();
+    ctx.arc(moonX, moonY, moonRadius, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // Add subtle moon craters for texture
+    ctx.fillStyle = 'rgba(180, 180, 180, 0.3)';
+    const craters = [
+        { x: moonX - 20, y: moonY - 10, r: 8 },
+        { x: moonX + 15, y: moonY + 20, r: 12 },
+        { x: moonX - 30, y: moonY + 25, r: 6 },
+        { x: moonX + 25, y: moonY - 30, r: 5 }
+    ];
+    
+    craters.forEach(crater => {
+        ctx.beginPath();
+        ctx.arc(crater.x, crater.y, crater.r, 0, Math.PI * 2);
+        ctx.fill();
+    });
+    
+    ctx.restore();
+}
+
+function drawOffScreenIndicator() {
+    const lander = gameState.lander;
+    
+    // Only show indicator if lander is above the screen (y < 0)
+    if (lander.y >= 0 && lander.y <= canvas.height) return;
+    
+    // Check if lander is above the screen
+    if (lander.y < 0) {
+        const landerScreenX = lander.x - gameState.cameraX;
+        
+        // Clamp arrow position to screen bounds with some margin
+        const arrowX = Math.max(50, Math.min(canvas.width - 50, landerScreenX));
+        const arrowY = 40; // Distance from top of screen
+        
+        ctx.save();
+        
+        // Add pulsing animation
+        const pulse = 0.9 + 0.1 * Math.sin(Date.now() * 0.012);
+        const shadowPulse = 15 + 10 * Math.sin(Date.now() * 0.008);
+        
+        // Draw larger, more prominent arrow with strong contrast
+        // First draw a black outline for better visibility
+        ctx.fillStyle = '#000000';
+        ctx.beginPath();
+        ctx.moveTo(arrowX, arrowY - 32); // Point at top
+        ctx.lineTo(arrowX - 15, arrowY - 16); // Left side of arrowhead
+        ctx.lineTo(arrowX - 8, arrowY - 16); // Left side of shaft
+        ctx.lineTo(arrowX - 8, arrowY + 2); // Bottom left of shaft
+        ctx.lineTo(arrowX + 8, arrowY + 2); // Bottom right of shaft
+        ctx.lineTo(arrowX + 8, arrowY - 16); // Right side of shaft
+        ctx.lineTo(arrowX + 15, arrowY - 16); // Right side of arrowhead
+        ctx.closePath();
+        ctx.fill();
+        
+        // Draw the main arrow in bright cyan with glow
+        ctx.fillStyle = '#00ffff';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 2;
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = shadowPulse;
+        ctx.globalAlpha = pulse;
+        
+        // Main arrow shape (slightly smaller than outline)
+        ctx.beginPath();
+        ctx.moveTo(arrowX, arrowY - 28); // Point at top
+        ctx.lineTo(arrowX - 12, arrowY - 12); // Left side of arrowhead
+        ctx.lineTo(arrowX - 6, arrowY - 12); // Left side of shaft
+        ctx.lineTo(arrowX - 6, arrowY); // Bottom left of shaft
+        ctx.lineTo(arrowX + 6, arrowY); // Bottom right of shaft
+        ctx.lineTo(arrowX + 6, arrowY - 12); // Right side of shaft
+        ctx.lineTo(arrowX + 12, arrowY - 12); // Right side of arrowhead
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        
+        // Reset alpha for distance text
+        ctx.globalAlpha = 1;
+        
+        // Draw distance indicator with strong contrast
+        const distance = Math.abs(lander.y);
+        
+        // Text background for better readability
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+        ctx.fillRect(arrowX - 25, arrowY + 25, 50, 18);
+        
+        // Distance text
+        ctx.fillStyle = '#00ffff';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 1;
+        ctx.font = 'bold 14px Courier New';
+        ctx.textAlign = 'center';
+        ctx.shadowColor = '#00ffff';
+        ctx.shadowBlur = 5;
+        
+        // Draw text with outline for maximum visibility
+        ctx.strokeText(`${Math.floor(distance)}m`, arrowX, arrowY + 38);
+        ctx.fillText(`${Math.floor(distance)}m`, arrowX, arrowY + 38);
+        
+        ctx.restore();
+        ctx.shadowBlur = 0;
+    }
 } 

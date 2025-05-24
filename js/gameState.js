@@ -11,6 +11,7 @@ let worldEndX = 0;
 
 // Game state object
 let gameState = {
+    gameMode: 'collector', // 'collector' or 'distance'
     lander: {
         x: 100,
         y: 100,
@@ -26,6 +27,7 @@ let gameState = {
     landingPads: [],
     pickups: [],
     visitedPads: new Set(),
+    highestPadReached: -1, // For distance mode - tracks highest pad ID reached
     particles: [],
     stars: [],
     planets: [],

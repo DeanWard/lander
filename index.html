@@ -14,7 +14,27 @@
     
     <div id="startScreen" class="neon-text">
         <h1 style="color: #00ffff;">NEON LUNAR LANDER</h1>
-        <p>Visit as many landing pads as possible before crashing</p>
+        
+        <!-- Game Mode Selection -->
+        <div id="gameModeSelection" style="margin: 20px 0;">
+            <h3 style="color: #ffff00; margin-bottom: 10px;">SELECT MISSION TYPE</h3>
+            <div style="margin: 10px 0;">
+                <input type="radio" id="modeCollector" name="gameMode" value="collector" checked 
+                       style="margin-right: 8px; accent-color: #00ffff;">
+                <label for="modeCollector" style="color: #00ffff; cursor: pointer;">
+                    🎯 PAD COLLECTOR - Visit as many landing pads as possible
+                </label>
+            </div>
+            <div style="margin: 10px 0;">
+                <input type="radio" id="modeDistance" name="gameMode" value="distance" 
+                       style="margin-right: 8px; accent-color: #ffff00;">
+                <label for="modeDistance" style="color: #ffff00; cursor: pointer;">
+                    🚀 DISTANCE CHALLENGE - Land on the highest numbered pad
+                </label>
+            </div>
+        </div>
+        
+        <p id="modeDescription" style="font-size: 14px; color: #ffffff; margin: 15px 0;">Visit as many landing pads as possible before crashing</p>
         <button id="startButton" class="neon-button">START MISSION</button>
         <p style="color: #ffff00; font-size: 14px; margin-top: 10px;">Press SPACE or TAP to start</p>
     </div>
@@ -22,7 +42,7 @@
     <div id="ui" class="neon-text" style="display: none;">
         <div class="ui-main-stat">Fuel: <span id="fuel">100</span>%</div>
         <div class="ui-main-stat">Speed: <span id="speed">0</span></div>
-        <div class="ui-main-stat">Pads Visited: <span id="pads">0</span></div>
+        <div class="ui-main-stat"><span id="padsLabel">Pads Visited</span>: <span id="pads">0</span></div>
         <div class="ui-main-stat">Time: <span id="time">0</span>s</div>
         <div class="ui-secondary-stat">🏆 Personal Best: <span id="personalBest">0</span></div>
         <div id="multiplayer" class="ui-multiplayer">👻 Ghosts: <span id="ghostCount">0</span></div>
@@ -60,7 +80,11 @@
     
     <div id="gameOver" class="neon-text">
         <h2 style="color: #ff0000;">LANDER DESTROYED!</h2>
-        <div style="color: #00ffff;">Pads Visited: <span id="padsVisitedGameOver"></span></div>
+        <div id="collectorGameOver" style="color: #00ffff;">Pads Visited: <span id="padsVisitedGameOver"></span></div>
+        <div id="distanceGameOver" style="color: #ffff00; display: none;">
+            Highest Pad Reached: <span id="highestPadGameOver"></span><br>
+            Total Pads Visited: <span id="totalPadsGameOver"></span>
+        </div>
         <p style="color: #ffff00;">Press SPACE or TAP to try again</p>
     </div>
     

@@ -40,10 +40,15 @@ function updateGame() {
     const cameraTarget = gameState.lander.x - canvas.width * 0.4;
     gameState.cameraX += (cameraTarget - gameState.cameraX) * 0.1; // Smooth follow
     
-    // Generate more terrain/pads if needed
-    if (gameState.lander.x + canvas.width > worldEndX - PAD_SPACING) {
+    // Generate terrain proactively - always ensure we have enough terrain ahead
+    // Generate more frequently with greater lookahead distance
+    const terrainLookahead = canvas.width * 3; // Generate 3 screen widths ahead
+    if (gameState.lander.x + terrainLookahead > worldEndX) {
         generateMoreTerrainAndPads();
     }
+    
+    // Also call terrain generation every frame to ensure consistent coverage
+    updateTerrainGeneration();
     
     // Victory condition removed - game continues until crash
 }
@@ -60,6 +65,7 @@ function resetGame() {
     generatedChunks = new Set();
     worldEndX = 0;
     gameState = {
+        gameMode: gameState.gameMode || 'collector', // Preserve selected game mode
         lander: {
             x: 100,
             y: 100,
@@ -75,6 +81,7 @@ function resetGame() {
         landingPads: [],
         pickups: [],
         visitedPads: new Set(),
+        highestPadReached: -1, // Reset highest pad reached
         particles: [],
         stars: [],
         planets: [],
@@ -121,6 +128,10 @@ function resetGame() {
 
 function startGame() {
     if (gameStarted) return;
+    
+    // Get selected game mode
+    const selectedMode = document.querySelector('input[name="gameMode"]:checked').value;
+    gameState.gameMode = selectedMode;
     
     // Play start sound
     playStartSound();
@@ -179,6 +190,25 @@ function initGame() {
     generateStars();
     generatePlanets(); // Generate planets for midground parallax
     generateAsteroids(); // Generate floating asteroids
+    
+    // Set up game mode selection handlers
+    const modeCollector = document.getElementById('modeCollector');
+    const modeDistance = document.getElementById('modeDistance');
+    const modeDescription = document.getElementById('modeDescription');
+    
+    function updateModeDescription() {
+        const selectedMode = document.querySelector('input[name="gameMode"]:checked').value;
+        if (selectedMode === 'collector') {
+            modeDescription.textContent = 'Visit as many landing pads as possible before crashing';
+            modeDescription.style.color = '#00ffff';
+        } else if (selectedMode === 'distance') {
+            modeDescription.textContent = 'Go as far as you can - land on the highest numbered pad possible';
+            modeDescription.style.color = '#ffff00';
+        }
+    }
+    
+    modeCollector.addEventListener('change', updateModeDescription);
+    modeDistance.addEventListener('change', updateModeDescription);
     
     // Set up start button event
     document.getElementById('startButton').addEventListener('click', startGame);

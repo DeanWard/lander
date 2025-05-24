@@ -15,8 +15,8 @@ startSound.volume = 0.8;
 explodeSound.volume = 1.0;
 hissSound.volume = 1;
 legsUpgradeSound.volume = 0.8;
-landSound.volume = 0.7;
-launchSound.volume = 0.8;
+landSound.volume = 0.3;
+launchSound.volume = 0.05;
 
 // Audio management functions
 function playRocketSound() {

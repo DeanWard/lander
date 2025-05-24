@@ -30,6 +30,12 @@ function checkLanding() {
                 if (!pad.visited) {
                     pad.visited = true;
                     gameState.visitedPads.add(pad.id);
+                    
+                    // Track highest pad reached in distance mode
+                    if (gameState.gameMode === 'distance') {
+                        gameState.highestPadReached = Math.max(gameState.highestPadReached, pad.id);
+                    }
+                    
                     // Refill fuel: 2% less for each unique pad visited
                     const padsVisited = gameState.visitedPads.size;
                     lander.fuel = Math.max(0, 100 - (padsVisited - 1) * 2);
@@ -233,11 +239,21 @@ function resetLander() {
     
     // Show game over screen after explosion - store timeout ID
     gameOverTimeout = setTimeout(() => {
+        // Update game over display based on game mode
+        if (gameState.gameMode === 'collector') {
+            document.getElementById('collectorGameOver').style.display = 'block';
+            document.getElementById('distanceGameOver').style.display = 'none';
+            document.getElementById('padsVisitedGameOver').textContent = gameState.visitedPads.size;
+        } else if (gameState.gameMode === 'distance') {
+            document.getElementById('collectorGameOver').style.display = 'none';
+            document.getElementById('distanceGameOver').style.display = 'block';
+            document.getElementById('highestPadGameOver').textContent = gameState.highestPadReached >= 0 ? (gameState.highestPadReached + 1) : 'None';
+            document.getElementById('totalPadsGameOver').textContent = gameState.visitedPads.size;
+        }
+        
         document.getElementById('gameOver').style.display = 'block';
         gameOverTimeout = null; // Clear the reference
     }, 800);
-    
-    document.getElementById('padsVisitedGameOver').textContent = gameState.visitedPads.size;
 }
 
 function cancelGameOverTimeout() {
@@ -346,8 +362,7 @@ function updatePhysics() {
         // Prevent moving left past the start of the world
         if (lander.x < 0) lander.x = 0;
         
-        // Clamp vertical position at the top
-        if (lander.y < 0) lander.y = 0;
+        // Remove clamping at the top - let lander go off-screen
         if (lander.y > canvas.height) resetLander();
         
         checkLanding();
